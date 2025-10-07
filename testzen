@@ -1,0 +1,118 @@
+#!/bin/bash
+# TestZen Automation Framework - Command Line Interface with Appium Management
+
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+# Colors for output
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# TestZen logging format
+testzen_log() {
+    local level=$1
+    local message=$2
+    local timestamp=$(date '+%H:%M:%S')
+    
+    case "$level" in
+        INFO)
+            echo -e "${CYAN}[TestZen]${NC} ${BLUE}[$timestamp]${NC} $message"
+            ;;
+        SUCCESS)
+            echo -e "${CYAN}[TestZen]${NC} ${BLUE}[$timestamp]${NC} ${GREEN}[SUCCESS] $message${NC}"
+            ;;
+        WARNING)
+            echo -e "${CYAN}[TestZen]${NC} ${BLUE}[$timestamp]${NC} ${YELLOW}[WARNING] $message${NC}"
+            ;;
+        ERROR)
+            echo -e "${CYAN}[TestZen]${NC} ${BLUE}[$timestamp]${NC} ${RED}[ERROR] $message${NC}"
+            ;;
+        *)
+            echo -e "${CYAN}[TestZen]${NC} ${BLUE}[$timestamp]${NC} $message"
+            ;;
+    esac
+}
+
+# Function to check if Appium is running
+check_appium() {
+    lsof -i :4723 | grep LISTEN > /dev/null 2>&1
+    return $?
+}
+
+# Function to start Appium
+start_appium() {
+    testzen_log "INFO" "Starting Appium server..."
+    
+    # Kill any existing Appium processes first
+    pkill -f "appium" > /dev/null 2>&1
+    sleep 2
+    
+    # Start Appium in background
+    cd appium-web-inspector && npx appium --allow-insecure=chromedriver_autodownload > /tmp/appium.log 2>&1 &
+    APPIUM_PID=$!
+    cd ..
+    
+    # Wait for Appium to start (max 15 seconds)
+    echo -n "    Waiting for Appium to initialize"
+    for i in {1..15}; do
+        if check_appium; then
+            echo ""
+            testzen_log "SUCCESS" "Appium server started on port 4723"
+            return 0
+        fi
+        echo -n "."
+        sleep 1
+    done
+    
+    echo ""
+    testzen_log "ERROR" "Failed to start Appium server"
+    return 1
+}
+
+# Check if this is a command that needs Appium
+needs_appium() {
+    case "$1" in
+        run|inspector)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+# Show TestZen header for main commands
+show_header() {
+    case "$1" in
+        run|list|inspector|version)
+            echo -e "${CYAN}========================================${NC}"
+            echo -e "${CYAN}         TestZen Automation Suite       ${NC}"
+            echo -e "${CYAN}========================================${NC}"
+            ;;
+    esac
+}
+
+# Main logic
+show_header "$1"
+
+if needs_appium "$1"; then
+    if ! check_appium; then
+        testzen_log "WARNING" "Appium server is not running"
+        start_appium
+        if [ $? -ne 0 ]; then
+            testzen_log "ERROR" "Could not start Appium. Please check your setup."
+            testzen_log "INFO" "Check /tmp/appium.log for details"
+            exit 1
+        fi
+    else
+        testzen_log "INFO" "Appium server is already running"
+    fi
+fi
+
+# Pass all arguments to the Python script
+python3 "$SCRIPT_DIR/testzen.py" "$@"

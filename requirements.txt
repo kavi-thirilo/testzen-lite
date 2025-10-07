@@ -1,0 +1,42 @@
+# TestZen Enterprise Framework Dependencies
+
+# Core automation dependencies
+requests>=2.28.0
+pyyaml>=6.0
+pandas>=1.5.0
+openpyxl>=3.0.0
+
+# Web and mobile automation
+selenium>=4.0.0
+appium-python-client>=2.0.0
+
+# Security and authentication
+pyjwt>=2.6.0
+pyotp>=2.7.0
+cryptography>=3.4.0
+
+# Machine learning (for self-healing)
+scikit-learn>=1.1.0
+numpy>=1.21.0
+
+# Database
+# sqlite3 is included in Python standard library
+
+# Testing frameworks
+pytest>=7.0.0
+allure-pytest>=2.10.0
+
+# CI/CD integration
+# jenkins-api>=1.7.0  # Optional
+
+# Utilities
+colorama>=0.4.0
+click>=8.0.0
+jinja2>=3.0.0
+
+# Optional dependencies for extended features
+# Uncomment as needed:
+# graphql-core>=3.2.0      # For GraphQL testing
+# xmltodict>=0.13.0        # For SOAP/XML parsing
+# jira>=3.4.0              # For JIRA integration
+# testrail-api>=1.10.0     # For TestRail integration
