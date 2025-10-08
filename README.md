@@ -18,6 +18,104 @@ TestZen Lite is a streamlined no-code mobile test automation framework that runs
 
 ---
 
+## Installation
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/kavi-thirilo/testzen-lite.git
+cd testzen-lite
+```
+
+### Step 2: Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 3: Install Appium
+
+```bash
+npm install -g appium
+appium driver install uiautomator2  # For Android
+appium driver install xcuitest      # For iOS (macOS only)
+```
+
+### Step 4: Verify Installation
+
+```bash
+python testzen.py --help
+```
+
+**What you get:**
+```
+testzen-lite/
+├── apps/
+│   ├── android/          # Place your APK here
+│   └── ios/              # Place your IPA here
+├── tests/
+│   ├── android/          # Your Android test Excel files
+│   └── ios/              # Your iOS test Excel files
+├── reports/              # Generated test reports
+├── testzen.py            # Main executable
+├── .github/workflows/    # CI/CD ready to use
+└── .gitlab-ci.yml        # GitLab CI configuration
+```
+
+---
+
+## Getting Started
+
+### 1. Remove Example Tests (Optional)
+
+```bash
+# Remove example test files
+rm -rf tests/android/billing
+rm -rf tests/android/login
+rm -rf tests/android/checkout
+```
+
+### 2. Create Your Test Module
+
+```bash
+# Create module for your feature
+mkdir -p tests/android/my_feature
+```
+
+### 3. Add Your Test Files
+
+- Create Excel files following the format in [Quick Start](#quick-start)
+- Copy to `tests/android/my_feature/my_test.xlsx`
+
+### 4. Add Your Mobile App
+
+```bash
+# Copy your APK
+cp /path/to/your-app.apk apps/android/
+
+# Or copy your IPA
+cp /path/to/your-app.ipa apps/ios/
+```
+
+### 5. Run Your First Test
+
+```bash
+python testzen.py run --file tests/android/my_feature/my_test.xlsx --platform android
+```
+
+### 6. Enable CI/CD (Optional)
+
+Push to your GitHub/GitLab repository - tests will run automatically!
+
+```bash
+git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git add .
+git commit -m "Add my mobile tests"
+git push -u origin main
+```
+
+---
+
 ## Quick Start
 
 ### 1. Test Organization
@@ -128,7 +226,7 @@ Tests run automatically in your CI/CD pipeline:
 
 **What happens:**
 1. Spins up Android emulator (API 29)
-2. Installs your APK from `build/android/apk/`
+2. Installs your APK from `apps/android/`
 3. Runs all tests in `tests/android/*/`
 4. Generates HTML report
 5. Uploads reports as artifacts
@@ -227,7 +325,7 @@ After test execution, find reports in:
 
 3. **Check APK exists:**
    ```bash
-   ls build/android/apk/*.apk  # Should show your APK
+   ls apps/android/*.apk  # Should show your APK
    ```
 
 ### CI/CD tests failing?
@@ -238,8 +336,8 @@ After test execution, find reports in:
 
 2. **Check APK/IPA committed:**
    ```bash
-   git ls-files build/android/apk/
-   git ls-files build/ios/ipa/
+   git ls-files apps/android/
+   git ls-files apps/ios/
    ```
 
 3. **Check workflow logs:**
@@ -293,7 +391,7 @@ python testzen.py run --file tests/android/login/*.xlsx --platform android
 - **[Supported Actions](docs/SUPPORTED_ACTIONS.md)** - All available test actions
 - **[Multi-Module Guide](MULTI_MODULE_GUIDE.md)** - Detailed module organization
 - **[CI/CD Setup](CI_CD_SETUP.md)** - Complete CI/CD configuration guide
-- **[Scheduling](docs/SCHEDULE_SETUP.md)** - Nightly and scheduled runs
+- **[CLI Usage](docs/CLI_USAGE.md)** - Command line interface guide
 
 ---
 
