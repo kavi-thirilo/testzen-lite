@@ -1,25 +1,17 @@
-# TestZen - No-Code Test Automation Framework
-# Required Python packages
+# TestZen Lite - Framework Core Dependencies
+# Note: Install requirements.txt from project root instead
 
 # Core Appium and Selenium
-Appium-Python-Client==3.1.1
-selenium==4.15.0
+Appium-Python-Client>=2.0.0
+selenium>=4.0.0
 
 # Excel file handling
-pandas==2.1.0
-openpyxl==3.1.2
-xlrd==2.0.1
+pandas>=1.5.0
+openpyxl>=3.0.0
 
 # Configuration files
-PyYAML==6.0.1
+PyYAML>=6.0
 
-# Logging and utilities
-colorlog==6.7.0
-
-# Web driver management
-webdriver-manager==4.0.1
-
-# Optional: For advanced features
-requests==2.31.0
-Pillow==10.0.0
-jinja2==3.1.2
+# Machine learning (for self-healing)
+scikit-learn>=1.1.0
+numpy>=1.21.0
