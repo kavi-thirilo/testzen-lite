@@ -56,9 +56,13 @@ testzen/
 │   └── workflows/
 │       └── android-tests.yml          # GitHub Actions - Android emulator
 ├── .gitlab-ci.yml                     # GitLab CI/CD - Validation & iOS
-├── build/
-│   ├── README.md                      # Instructions for APK/IPA
-│   └── your-app.apk                   # Your Android APK (add this)
+├── apps/
+│   ├── android/
+│   │   ├── README.md                  # Instructions for APK
+│   │   └── your-app.apk               # Your Android APK (add this)
+│   └── ios/
+│       ├── README.md                  # Instructions for IPA
+│       └── your-app.ipa               # Your iOS IPA (add this)
 ├── tests/
 │   ├── android/
 │   │   ├── README.md
@@ -117,7 +121,7 @@ testzen/
 9. Cache emulator for faster subsequent runs
 10. Start emulator with optimizations
 11. Wait for emulator to boot
-12. Install APK from build/ (if exists)
+12. Install APK from apps/android/ (if exists)
 13. Start Appium server
 14. Run all tests from tests/android/*.xlsx
 15. Upload test reports as artifacts
@@ -153,8 +157,8 @@ testzen/
 
 **Option 1: Commit APK**
 ```bash
-cp /path/to/your-app.apk build/
-git add build/your-app.apk
+cp /path/to/your-app.apk apps/android/
+git add apps/android/your-app.apk
 git commit -m "Add Android APK for CI testing"
 git push
 ```
@@ -306,7 +310,7 @@ No additional setup needed.
 
 **Common issues:**
 1. **APK not compatible** - Check API level (currently using API 29)
-2. **App not installed** - Check APK exists in `build/`
+2. **App not installed** - Check APK exists in `apps/android/`
 3. **Appium connection failed** - Check desired capabilities
 4. **Timeout errors** - Increase wait times in test files
 
@@ -327,7 +331,7 @@ No additional setup needed.
 1. Folder structure created
 2. GitHub Actions workflow configured
 3. GitLab CI/CD updated
-4. Add your Android APK to `build/`
+4. Add your Android APK to `apps/android/`
 5. Push to GitHub to enable Actions
 6. Test the pipeline
 

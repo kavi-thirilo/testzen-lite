@@ -63,7 +63,7 @@ Excel format (TestZen standard):
 
 ## APK Location
 
-Place your Android APK here: `build/android/apk/your-app.apk`
+Place your Android APK here: `apps/android/your-app.apk`
 
 The workflow will install it on the emulator before running tests.
 

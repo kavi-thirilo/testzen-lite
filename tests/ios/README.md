@@ -71,7 +71,7 @@ Excel format (TestZen standard):
 
 ## IPA Location
 
-Place your iOS IPA here: `build/ios/ipa/your-app.ipa`
+Place your iOS IPA here: `apps/ios/your-app.ipa`
 
 The workflow will install it on the simulator/device before running tests.
 
