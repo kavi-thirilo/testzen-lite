@@ -16,17 +16,42 @@ done
 echo "Emulator ready"
 
 echo "=== Validating APK ==="
-APK_COUNT=$(ls -1 build/android/apk/*.apk 2>/dev/null | wc -l)
+APK_COUNT=$(ls -1 apps/android/*.apk 2>/dev/null | wc -l)
 if [ "$APK_COUNT" -eq 0 ]; then
-  echo "ERROR: No APK found in build/android/apk/"
-  exit 1
+  echo "WARNING: No APK found in apps/android/"
+  echo "Skipping APK installation. Tests will run against pre-installed apps or use provided APK path."
+  echo "To include APK: Add your .apk file to apps/android/"
+
+  # Skip to running tests without APK installation
+  mkdir -p reports
+  echo "=== Running Tests (No APK Installation) ==="
+  TEST_FAILED=0
+  for module_dir in tests/android/*/; do
+    if [ -d "$module_dir" ]; then
+      for test_file in "$module_dir"*.xlsx; do
+        if [ -f "$test_file" ]; then
+          echo "Executing: $test_file"
+          python testzen.py run --file "$test_file" --platform android || TEST_FAILED=1
+        fi
+      done
+    fi
+  done
+
+  echo "=== Generating Report ==="
+  python scripts/ci/generate_module_report.py android tests reports || echo "Report generation skipped"
+
+  echo "=== Stopping Appium ==="
+  kill $APPIUM_PID || true
+
+  echo "=== Test Execution Complete (No APK) ==="
+  exit $TEST_FAILED
 elif [ "$APK_COUNT" -gt 1 ]; then
   echo "ERROR: Multiple APKs found. Only one APK should exist:"
-  ls -lh build/android/apk/*.apk
+  ls -lh apps/android/*.apk
   exit 1
 fi
 
-APK_PATH=$(ls build/android/apk/*.apk)
+APK_PATH=$(ls apps/android/*.apk)
 echo "Found APK: $APK_PATH"
 ls -lh "$APK_PATH"
 

@@ -124,7 +124,7 @@ testzen/
 
 **Execution flow:**
 1. GitHub Actions starts Android emulator (API 29)
-2. Installs APK from `build/android/apk/*.apk` (if exists)
+2. Installs APK from `apps/android/*.apk` (if exists)
 3. Starts Appium server
 4. **Scans** `tests/android/*/` for all modules
 5. **For each module:**
@@ -180,7 +180,7 @@ Generating module-based test report...
 3. Click **Play** on `test:ios:manual` job
 
 **Execution flow:**
-1. Checks for IPA in `build/ios/ipa/*.ipa`
+1. Checks for IPA in `apps/ios/*.ipa`
 2. Installs IPA on iOS device/simulator (if available)
 3. **Scans** `tests/ios/*/` for all modules
 4. **For each module:**
@@ -263,8 +263,8 @@ The generated HTML report includes:
 
 **Option 1: Commit APK** (for small APKs < 50MB)
 ```bash
-cp path/to/app-debug.apk build/android/apk/
-git add build/android/apk/app-debug.apk
+cp path/to/app-debug.apk apps/android/
+git add apps/android/app-debug.apk
 git commit -m "Add Android APK for automated testing"
 git push
 ```
@@ -275,12 +275,12 @@ git push
 git lfs install
 
 # Track APK files
-git lfs track "build/android/apk/*.apk"
+git lfs track "apps/android/*.apk"
 git add .gitattributes
 
 # Add APK
-cp path/to/app.apk build/android/apk/
-git add build/android/apk/app.apk
+cp path/to/app.apk apps/android/
+git add apps/android/app.apk
 git commit -m "Add Android APK via Git LFS"
 git push
 ```
@@ -292,23 +292,23 @@ Add a build step in `.github/workflows/android-tests.yml` before tests:
   run: |
     cd android
     ./gradlew assembleDebug
-    cp app/build/outputs/apk/debug/app-debug.apk ../build/android/apk/
+    cp app/build/outputs/apk/debug/app-debug.apk ../apps/android/
 ```
 
 ### iOS IPA
 
 **Option 1: Commit IPA**
 ```bash
-cp path/to/app.ipa build/ios/ipa/
-git add build/ios/ipa/app.ipa
+cp path/to/app.ipa apps/ios/
+git add apps/ios/app.ipa
 git commit -m "Add iOS IPA for manual testing"
 git push
 ```
 
 **Option 2: Use Git LFS**
 ```bash
-git lfs track "build/ios/ipa/*.ipa"
-git add .gitattributes build/ios/ipa/app.ipa
+git lfs track "apps/ios/*.ipa"
+git add .gitattributes apps/ios/app.ipa
 git commit -m "Add iOS IPA via Git LFS"
 git push
 ```
@@ -492,7 +492,7 @@ python scripts/ci/generate_module_report.py android tests reports
 **Problem:** "No APK/IPA found" warning
 
 **Solutions:**
-1. Add APK/IPA to correct location: `build/android/apk/` or `build/ios/ipa/`
+1. Add APK/IPA to correct location: `apps/android/` or `apps/ios/`
 2. Check .gitignore doesn't exclude build files
 3. Consider using Git LFS for large files
 4. Or build app in CI/CD pipeline

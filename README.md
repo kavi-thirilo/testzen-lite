@@ -47,13 +47,11 @@ tests/
 Place your mobile app files here:
 
 ```
-build/
+apps/
 ├── android/
-│   └── apk/
-│       └── your-app.apk         # Android app to test
+│   └── your-app.apk         # Android app to test
 └── ios/
-    └── ipa/
-        └── your-app.ipa         # iOS app to test
+    └── your-app.ipa         # iOS app to test
 ```
 
 **Important:** Only one APK or IPA per platform.

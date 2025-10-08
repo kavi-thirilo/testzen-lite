@@ -66,3 +66,7 @@ Thumbs.db
 *.key
 *.pem
 credentials.json
+
+# Optional: Uncomment to ignore test app binaries (if you don't want to commit them)
+# apps/**/*.apk
+# apps/**/*.ipa

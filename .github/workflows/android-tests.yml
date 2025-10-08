@@ -98,17 +98,17 @@ jobs:
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
 
-      - name: Check for APK in build folder
+      - name: Check for APK in apps folder
         id: check-apk
         run: |
-          if [ -f build/android/apk/*.apk ]; then
+          if [ -f apps/android/*.apk ]; then
             echo "apk_exists=true" >> $GITHUB_OUTPUT
-            echo "APK found in build/android/apk/ folder"
-            ls -lh build/android/apk/*.apk
+            echo "APK found in apps/android/ folder"
+            ls -lh apps/android/*.apk
           else
             echo "apk_exists=false" >> $GITHUB_OUTPUT
-            echo "WARNING: No APK found in build/android/apk/ folder"
-            echo "Tests will need to connect to pre-installed app or you need to add APK to build/android/apk/"
+            echo "WARNING: No APK found in apps/android/ folder"
+            echo "Tests will need to connect to pre-installed app or you need to add APK to apps/android/"
           fi
 
       - name: Run Android tests on emulator
