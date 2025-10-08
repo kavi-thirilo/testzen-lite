@@ -14,6 +14,7 @@ from typing import Optional
 class Colors:
     """ANSI color codes for terminal output"""
     # Reset
+    # Reset
     RESET = '\033[0m'
 
     # Regular Colors
