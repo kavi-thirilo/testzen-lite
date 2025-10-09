@@ -142,6 +142,8 @@ def main():
         epilog="""
 Examples:
   testzen run --file tests/login.xlsx                     # Run with auto-launch (default)
+  testzen run --file tests/login.xlsx --auto-appium       # Auto-start Appium server
+  testzen run --file tests/login.xlsx --auto-appium --keep-appium  # Keep Appium running after
   testzen run --file tests/login.xlsx --no-auto-launch    # Disable auto-launch
   testzen run --file tests/login.xlsx --device emulator-5554  # Use specific device
   testzen run --file tests/login.xlsx --avd Pixel_4_API_30    # Prefer specific AVD
@@ -188,7 +190,11 @@ Examples:
                            help='Skip clearing app cache during cleanup')
     run_parser.add_argument('--no-cleanup-temp', action='store_true',
                            help='Skip removing temporary files during cleanup')
-    
+    run_parser.add_argument('--auto-appium', action='store_true',
+                           help='Automatically start Appium server if not running')
+    run_parser.add_argument('--keep-appium', action='store_true',
+                           help='Keep Appium server running after tests (only with --auto-appium)')
+
     # List command
     list_parser = subparsers.add_parser('list', help='List available tests')
     list_parser.add_argument('--platform', type=str, choices=['android', 'ios'],
@@ -230,6 +236,12 @@ Examples:
             if hasattr(args, 'avd') and args.avd:
                 config['preferred_avd'] = args.avd
 
+            # Appium server configuration
+            if hasattr(args, 'auto_appium') and args.auto_appium:
+                config['auto_appium'] = True
+            if hasattr(args, 'keep_appium') and args.keep_appium:
+                config['keep_appium'] = True
+
             # Cleanup configuration
             if hasattr(args, 'no_cleanup') and args.no_cleanup:
                 config['cleanup_notifications'] = False
@@ -244,7 +256,7 @@ Examples:
                     config['cleanup_app_cache'] = False
                 if hasattr(args, 'no_cleanup_temp') and args.no_cleanup_temp:
                     config['cleanup_temp_files'] = False
-            
+
             if args.all:
                 success = cli.run_all_tests(args.platform, config)
                 sys.exit(0 if success else 1)

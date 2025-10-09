@@ -26,11 +26,15 @@ class TestZenAutomation:
         device_name = self.config.get('device_name', None)
         auto_launch = self.config.get('auto_launch_emulator', True)
         preferred_avd = self.config.get('preferred_avd', None)
+        auto_appium = self.config.get('auto_appium', False)
+        keep_appium = self.config.get('keep_appium', False)
 
         self.device_manager = DeviceManager(
             device_name=device_name,
             auto_launch_emulator=auto_launch,
-            preferred_avd=preferred_avd
+            preferred_avd=preferred_avd,
+            auto_appium=auto_appium,
+            keep_appium=keep_appium
         )
         self.excel_manager = ExcelManager(excel_file)
         self.element_finder = None
@@ -482,7 +486,26 @@ class TestZenAutomation:
         step_num = step_data.get('S.No', step_index + 1)
         action = str(step_data.get('Action', '')).strip()
         locator_type = str(step_data.get('Locator Type', '')).strip()
+
+        # Build locator value from multiple columns (supports fallback locators)
         locator_value = str(step_data.get('Locator Value', '')).strip()
+        locator_value_2 = str(step_data.get('Locator Value 2', '')).strip()
+        locator_value_3 = str(step_data.get('Locator Value 3', '')).strip()
+
+        # Build mapping of locator to column name for reporting
+        locator_column_map = {}
+        if locator_value and locator_value.lower() not in ['nan', 'none', '']:
+            locator_column_map[locator_value] = 'Locator Value'
+        if locator_value_2 and locator_value_2.lower() not in ['nan', 'none', '']:
+            locator_column_map[locator_value_2] = 'Locator Value 2'
+        if locator_value_3 and locator_value_3.lower() not in ['nan', 'none', '']:
+            locator_column_map[locator_value_3] = 'Locator Value 3'
+
+        # Combine non-empty locator values with pipe separator
+        locator_values = [lv for lv in [locator_value, locator_value_2, locator_value_3]
+                         if lv and lv.lower() not in ['nan', 'none', '']]
+        locator_value = '|'.join(locator_values) if len(locator_values) > 1 else (locator_values[0] if locator_values else '')
+
         description = str(step_data.get('Description', '')).strip()
         
         # Handle input data
@@ -503,20 +526,21 @@ class TestZenAutomation:
         step_start_time = time.time()
         success = False
         result_message = ""
-        
+        locator_info = None  # Track which locator actually worked (dict with attempt details)
+
         # Take BEFORE screenshot for actions that change UI state
         if self._should_capture_screenshot(action, description):
             before_screenshot_path = self._take_screenshot(f"step_{step_num:02d}_before", f"Before {action}: {description}")
             if before_screenshot_path:
                 print(f"[TZ] Captured BEFORE screenshot for: {description}")
             time.sleep(0.5)  # Brief pause between before and action
-        
+
         try:
             if action == 'click':
                 # Check if this is an optional step
                 is_optional = 'optional' in description.lower() or 'if visible' in description.lower() or 'if prompted' in description.lower()
-                
-                element = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description, timeout=3 if is_optional else 10)
+
+                element, locator_info = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description, timeout=3 if is_optional else 10)
                 if element:
                     # Check if element is clickable
                     clickable = element.get_attribute("clickable")
@@ -560,7 +584,7 @@ class TestZenAutomation:
                         print(f"[TZ] Element not found: {locator_value}")
             
             elif action == 'input':
-                element = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description)
+                element, locator_info = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description)
                 if element:
                     element.clear()
                     element.send_keys(input_data)
@@ -573,7 +597,7 @@ class TestZenAutomation:
                     result_message = f"Input field not found: {locator_value}"
             
             elif action == 'verify':
-                element = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description)
+                element, locator_info = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description)
                 if element:
                     success = True
                     result_message = f"Verification successful: Element found as expected"
@@ -613,7 +637,7 @@ class TestZenAutomation:
                 result_message = f"Force stopped: {package_name}"
                 
             elif action == 'long_press':
-                element = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description)
+                element, locator_info = self.device_manager.find_element_with_smart_fallback(locator_type, locator_value, description)
                 if element:
                     # Use mobile command for long press
                     self.device_manager.driver.execute_script('mobile: longClickGesture', {
@@ -813,10 +837,28 @@ class TestZenAutomation:
             # Update status
             status = "PASSED" if success else "FAILED"
             self.excel_manager.update_step_status(step_index, status, result_message)
-            
+
             # Add to professional report
             step_duration = time.time() - step_start_time
-            locator_str = f"{locator_type}: {locator_value}" if locator_type and locator_value else None
+
+            # Build locator display string with attempt info
+            if locator_info:
+                successful_locator = locator_info['locator']
+                attempt_num = locator_info['attempt']
+                total_attempts = locator_info['total_attempts']
+
+                # Get column name from the mapping
+                column_name = locator_column_map.get(successful_locator, 'Locator Value')
+
+                # Build display string
+                if total_attempts > 1:
+                    locator_str = f"{locator_type}: {successful_locator} (Found on attempt {attempt_num}/{total_attempts} from {column_name})"
+                else:
+                    locator_str = f"{locator_type}: {successful_locator}"
+            else:
+                # Fallback if no locator_info available
+                locator_str = f"{locator_type}: {locator_value}" if locator_type and locator_value else None
+
             self.professional_reporter.add_test_step(
                 step_number=step_num,
                 action=f"{action} - {description}",
@@ -847,10 +889,28 @@ class TestZenAutomation:
             print(f"[TZ] Step {step_num} ERROR: {e}")
             self.excel_manager.update_step_status(step_index, "FAILED", str(e))
             self.failed_steps += 1
-            
+
             # Add failed step to report
             step_duration = time.time() - step_start_time
-            locator_str = f"{locator_type}: {locator_value}" if locator_type and locator_value else None
+
+            # Build locator display string with attempt info
+            if locator_info:
+                successful_locator = locator_info['locator']
+                attempt_num = locator_info['attempt']
+                total_attempts = locator_info['total_attempts']
+
+                # Get column name from the mapping
+                column_name = locator_column_map.get(successful_locator, 'Locator Value')
+
+                # Build display string
+                if total_attempts > 1:
+                    locator_str = f"{locator_type}: {successful_locator} (Found on attempt {attempt_num}/{total_attempts} from {column_name})"
+                else:
+                    locator_str = f"{locator_type}: {successful_locator}"
+            else:
+                # Fallback if no locator_info available
+                locator_str = f"{locator_type}: {locator_value}" if locator_type and locator_value else None
+
             self.professional_reporter.add_test_step(
                 step_number=step_num,
                 action=f"{action} - {description}",

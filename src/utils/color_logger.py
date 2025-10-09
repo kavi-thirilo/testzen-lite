@@ -295,10 +295,16 @@ class ColorLogger:
 
         # Print statistics
         if self.use_colors:
-            print(f"  {Colors.GREEN} Passed:{Colors.RESET}  {passed:3d} ({passed/total*100:.1f}%)")
-            print(f"  {Colors.RED} Failed:{Colors.RESET}  {failed:3d} ({failed/total*100:.1f}%)")
-            if skipped > 0:
-                print(f"  {Colors.YELLOW} Skipped:{Colors.RESET} {skipped:3d} ({skipped/total*100:.1f}%)")
+            if total > 0:
+                print(f"  {Colors.GREEN} Passed:{Colors.RESET}  {passed:3d} ({passed/total*100:.1f}%)")
+                print(f"  {Colors.RED} Failed:{Colors.RESET}  {failed:3d} ({failed/total*100:.1f}%)")
+                if skipped > 0:
+                    print(f"  {Colors.YELLOW} Skipped:{Colors.RESET} {skipped:3d} ({skipped/total*100:.1f}%)")
+            else:
+                print(f"  {Colors.GREEN} Passed:{Colors.RESET}  {passed:3d}")
+                print(f"  {Colors.RED} Failed:{Colors.RESET}  {failed:3d}")
+                if skipped > 0:
+                    print(f"  {Colors.YELLOW} Skipped:{Colors.RESET} {skipped:3d}")
             print(f"  {Colors.CYAN}Total:{Colors.RESET}   {total:3d}")
 
             # Success rate with color coding
@@ -311,10 +317,16 @@ class ColorLogger:
 
             print(f"\n  {Colors.BOLD_CYAN}Success Rate:{Colors.RESET} {rate_color}{success_rate:.1f}%{Colors.RESET}")
         else:
-            print(f"  Passed:  {passed:3d} ({passed/total*100:.1f}%)")
-            print(f"  Failed:  {failed:3d} ({failed/total*100:.1f}%)")
-            if skipped > 0:
-                print(f"  Skipped: {skipped:3d} ({skipped/total*100:.1f}%)")
+            if total > 0:
+                print(f"  Passed:  {passed:3d} ({passed/total*100:.1f}%)")
+                print(f"  Failed:  {failed:3d} ({failed/total*100:.1f}%)")
+                if skipped > 0:
+                    print(f"  Skipped: {skipped:3d} ({skipped/total*100:.1f}%)")
+            else:
+                print(f"  Passed:  {passed:3d}")
+                print(f"  Failed:  {failed:3d}")
+                if skipped > 0:
+                    print(f"  Skipped: {skipped:3d}")
             print(f"  Total:   {total:3d}")
             print(f"\n  Success Rate: {success_rate:.1f}%")
 

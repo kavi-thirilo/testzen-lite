@@ -13,18 +13,23 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from .emulator_manager import EmulatorManager
+from .appium_server_manager import AppiumServerManager
 from .color_logger import ColorLogger
 
 class DeviceManager:
     """Manages device connection and APK operations"""
 
-    def __init__(self, device_name=None, auto_launch_emulator=True, preferred_avd=None):
+    def __init__(self, device_name=None, auto_launch_emulator=True, preferred_avd=None,
+                 auto_appium=False, keep_appium=False):
         self.device_name = device_name
         self.auto_launch_emulator = auto_launch_emulator
         self.preferred_avd = preferred_avd
+        self.auto_appium = auto_appium
+        self.keep_appium = keep_appium
         self.driver = None
         self.options = UiAutomator2Options()
         self.emulator_manager = EmulatorManager()
+        self.appium_manager = AppiumServerManager() if auto_appium else None
         self.logger = logging.getLogger(__name__)
         self.color_logger = ColorLogger()
         self.actual_device_id = None
@@ -92,6 +97,14 @@ class DeviceManager:
         """Connect to device with auto-launch support"""
         try:
             self.color_logger.step("Preparing device connection...")
+
+            # Auto-start Appium server if enabled
+            if self.appium_manager:
+                self.color_logger.header("Appium Server Auto-Start")
+                if not self.appium_manager.start_server():
+                    self.color_logger.error("Failed to auto-start Appium server")
+                    self.color_logger.info("Please start Appium manually: appium")
+                    return False
 
             # Ensure device is ready
             self.color_logger.step("Checking device availability...")
@@ -166,6 +179,12 @@ class DeviceManager:
                 pass
             finally:
                 self.driver = None
+
+        # Stop Appium server if it was auto-started and keep_appium is False
+        if self.appium_manager and not self.keep_appium:
+            self.appium_manager.stop_server()
+        elif self.appium_manager and self.keep_appium:
+            self.color_logger.info("Keeping Appium server running (--keep-appium enabled)")
 
     def install_apk(self, apk_path):
         """Install APK on device"""
@@ -419,6 +438,9 @@ class DeviceManager:
         2. If not found, try scrolling to element (up to 5 times)
         3. If multiple contexts exist, try alternate contexts
         4. Stay in the context where element was found
+
+        Returns:
+            tuple: (element, locator_info_dict) or (None, None) if not found
         """
         # Use ElementFinder for basic element finding
         element_finder = ElementFinder(self.driver)
@@ -426,17 +448,17 @@ class DeviceManager:
         # Try the provided locator with retries in current context
         # Use full timeout for initial attempt - NAF elements may take longer to index
         for attempt in range(max(3, timeout // 3)):
-            element = element_finder.find_element_safe(locator_type, locator_value, timeout=3)
+            element, locator_info = element_finder.find_element_safe(locator_type, locator_value, timeout=3)
             if element:
-                return element
+                return (element, locator_info)
             time.sleep(1)
 
         # Try auto-scrolling to find element (works for native elements)
         self.color_logger.info(f"Element '{description}' not visible, attempting auto-scroll...")
-        scrolled_element = self._scroll_to_element(locator_type, locator_value, max_scrolls=5)
+        scrolled_element, locator_info = self._scroll_to_element(locator_type, locator_value, max_scrolls=5)
         if scrolled_element:
             self.color_logger.success(f"Found '{description}' after scrolling")
-            return scrolled_element
+            return (scrolled_element, locator_info)
 
         # Check if we have multiple contexts available (hybrid/mixed app)
         contexts = self.get_available_contexts()
@@ -458,11 +480,11 @@ class DeviceManager:
                         self.driver.switch_to.context(context)
 
                         # Try finding element in new context
-                        element = element_finder.find_element_safe(locator_type, locator_value, timeout=3)
+                        element, locator_info = element_finder.find_element_safe(locator_type, locator_value, timeout=3)
                         if element:
                             self.color_logger.success(f"Found in {context} context{screen_info} - staying in this context")
                             # Stay in this context - don't switch back
-                            return element
+                            return (element, locator_info)
 
                         # Switch back if not found
                         self.driver.switch_to.context(current_context)
@@ -486,15 +508,15 @@ class DeviceManager:
             max_scrolls: Maximum number of scroll attempts
 
         Returns:
-            WebElement if found, None otherwise
+            tuple: (element, locator_info_dict) or (None, None) if not found
         """
         element_finder = ElementFinder(self.driver)
 
         for scroll_attempt in range(max_scrolls):
             # Check if element is now visible
-            element = element_finder.find_element_safe(locator_type, locator_value, timeout=2)
+            element, locator_info = element_finder.find_element_safe(locator_type, locator_value, timeout=2)
             if element:
-                return element
+                return (element, locator_info)
 
             # Scroll down using swipe gesture
             try:
@@ -517,16 +539,65 @@ class DeviceManager:
                 self.color_logger.warning(f"Scroll failed: {e}")
                 break
 
-        return None
+        return (None, None)
 
 class ElementFinder:
     """Utility class for finding elements"""
-    
+
     def __init__(self, driver):
         self.driver = driver
-    
+        self.color_logger = ColorLogger()
+
     def find_element_safe(self, locator_type, locator_value, timeout=10):
-        """Safely find element with timeout and smart fallback strategies"""
+        """Safely find element with timeout and smart fallback strategies
+
+        Supports multi-locator format: locator1|locator2|locator3
+        Each locator will be tried in order until one succeeds
+
+        Returns:
+            tuple: (element, locator_info_dict) or (None, None) if not found
+            locator_info_dict contains: {
+                'locator': 'successful_locator_string',
+                'attempt': 2,  # which attempt succeeded (1-based)
+                'total_attempts': 3  # total number of locators tried
+            }
+        """
+        # Check if locator_value contains multiple locators (pipe-separated)
+        if '|' in str(locator_value):
+            locators = [loc.strip() for loc in str(locator_value).split('|')]
+            self.color_logger.info(f"Multi-locator detected: {len(locators)} options")
+
+            # Try each locator in sequence
+            for idx, single_locator in enumerate(locators, 1):
+                self.color_logger.info(f"Trying locator {idx}/{len(locators)}: {single_locator[:60]}...")
+                element = self._find_single_locator(locator_type, single_locator, timeout=3)
+                if element:
+                    self.color_logger.success(f"Found element using locator {idx}/{len(locators)}: {single_locator[:60]}")
+                    locator_info = {
+                        'locator': single_locator,
+                        'attempt': idx,
+                        'total_attempts': len(locators)
+                    }
+                    return (element, locator_info)
+                else:
+                    self.color_logger.warning(f"Locator {idx} failed, trying next...")
+
+            self.color_logger.error(f"All {len(locators)} locators failed")
+            return (None, None)
+        else:
+            # Single locator - use normal flow
+            element = self._find_single_locator(locator_type, locator_value, timeout)
+            if element:
+                locator_info = {
+                    'locator': locator_value,
+                    'attempt': 1,
+                    'total_attempts': 1
+                }
+                return (element, locator_info)
+            return (None, None)
+
+    def _find_single_locator(self, locator_type, locator_value, timeout=10):
+        """Find element using a single locator with timeout"""
         for attempt in range(timeout):
             try:
                 if locator_type.lower() == 'xpath':
@@ -538,7 +609,7 @@ class ElementFinder:
                         if 'or' in locator_value.lower():
                             # The XPath already has fallbacks, try it as-is
                             return self.driver.find_element(AppiumBy.XPATH, locator_value)
-                        
+
                 elif locator_type.lower() == 'id':
                     return self.driver.find_element(AppiumBy.ID, locator_value)
                 elif locator_type.lower() == 'class':

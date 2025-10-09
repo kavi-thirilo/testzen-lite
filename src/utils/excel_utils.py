@@ -53,10 +53,10 @@ class ExcelManager:
         try:
             wb = openpyxl.load_workbook(self.excel_file)
             ws = wb.active
-            
-            # Find status column with simplified column order: S.No | Description | Action | Locator Type | Locator Value | Input Data | Status | Result Message
-            status_col = 7  # Column G (Status)
-            result_col = 8  # Column H (Result Message)
+
+            # Column order: S.No | Description | Action | Locator Type | Locator Value | Locator Value 2 | Locator Value 3 | Input Data | Status | Result Message
+            status_col = 9  # Column I (Status)
+            result_col = 10  # Column J (Result Message)
             
             # Clear all status and result message cells (starting from row 2 to skip header)
             for row_num in range(2, ws.max_row + 1):
@@ -85,24 +85,32 @@ class ExcelManager:
         try:
             wb = openpyxl.load_workbook(self.excel_file)
             ws = wb.active
-            
-            # Find status column with simplified column order: S.No | Description | Action | Locator Type | Locator Value | Input Data | Status | Result Message
-            status_col = 7  # Column G (Status)
-            result_col = 8  # Column H (Result Message)
+
+            # Column order: S.No | Description | Action | Locator Type | Locator Value | Locator Value 2 | Locator Value 3 | Input Data | Status | Result Message
+            status_col = 9  # Column I (Status)
+            result_col = 10  # Column J (Result Message)
             
             # Update status (step_index + 2 because of header row and 0-based index)
             row_num = step_index + 2
             ws.cell(row=row_num, column=status_col, value=status)
             
-            # Color coding with more vibrant, Excel-standard colors
+            # Color coding with professional Excel-standard colors
+            status_cell = ws.cell(row=row_num, column=status_col)
             if status == "PASSED":
-                # Bright green background for passed tests
-                ws.cell(row=row_num, column=status_col).fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
-                ws.cell(row=row_num, column=status_col).font = Font(bold=True, color="000000")  # Black bold text
+                # Professional green background for passed tests (similar to Excel conditional formatting)
+                status_cell.fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+                status_cell.font = Font(bold=True, color="006100")  # Dark green bold text
             elif status == "FAILED":
-                # Bright red background for failed tests  
-                ws.cell(row=row_num, column=status_col).fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-                ws.cell(row=row_num, column=status_col).font = Font(bold=True, color="FFFFFF")  # White bold text
+                # Professional red background for failed tests (similar to Excel conditional formatting)
+                status_cell.fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+                status_cell.font = Font(bold=True, color="9C0006")  # Dark red bold text
+            elif status == "SKIP":
+                # Yellow background for skipped tests
+                status_cell.fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
+                status_cell.font = Font(bold=True, color="9C6500")  # Dark yellow/brown bold text
+
+            # Center align status text
+            status_cell.alignment = Alignment(horizontal='center', vertical='center')
             
             # Add result message if provided
             if result_message:
@@ -147,9 +155,9 @@ class ExcelManager:
             failed_steps = 0
             unexecuted_steps = 0
             
-            # Analyze results from main sheet (assuming status is in column G)
+            # Analyze results from main sheet (Status is in column I = column 9)
             for row_num in range(2, main_sheet.max_row + 1):
-                status_cell = main_sheet.cell(row=row_num, column=7)
+                status_cell = main_sheet.cell(row=row_num, column=9)
                 if status_cell.value:
                     total_steps += 1
                     if status_cell.value == "PASSED":
