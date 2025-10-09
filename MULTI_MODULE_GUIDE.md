@@ -144,21 +144,21 @@ MODULE: login
 -----------------------------------------
   Test: login_test.xlsx
   Running test...
-  ✓ Test passed
+  [PASS] Test passed
 
   Test: oauth_login_test.xlsx
   Running test...
-  ✓ Test passed
+  [PASS] Test passed
 
 MODULE: checkout
 -----------------------------------------
   Test: cart_test.xlsx
   Running test...
-  ✓ Test passed
+  [PASS] Test passed
 
   Test: payment_test.xlsx
   Running test...
-  ✗ Test failed
+  [FAIL] Test failed
 
 =========================================
 TEST EXECUTION SUMMARY
@@ -168,8 +168,8 @@ Tests executed: 4
 =========================================
 
 Generating module-based test report...
-✓ HTML report saved: reports/android_test_report.html
-✓ JSON report saved: reports/android_test_report.json
+HTML report saved: reports/android_test_report.html
+JSON report saved: reports/android_test_report.json
 ```
 
 ### iOS (GitLab Manual)
@@ -225,17 +225,17 @@ The generated HTML report includes:
 └─────────┘  └─────────┘  └─────────┘
 
 ┌─ login ──────────────── 2 test(s) ─┐
-│ ✓ login_test.xlsx                  │
-│ ✓ oauth_login_test.xlsx            │
+│ [PASS] login_test.xlsx             │
+│ [PASS] oauth_login_test.xlsx       │
 └────────────────────────────────────┘
 
 ┌─ checkout ──────────────── 2 test(s) ─┐
-│ ✓ cart_test.xlsx                      │
-│ ✗ payment_test.xlsx                   │
+│ [PASS] cart_test.xlsx                 │
+│ [FAIL] payment_test.xlsx              │
 └────────────────────────────────────────┘
 
 ┌─ billing ──────────────── 1 test(s) ─┐
-│ ✓ Payment_Form_Validation_Test.xlsx  │
+│ [PASS] Payment_Form_Validation_Test.xlsx│
 └───────────────────────────────────────┘
 ```
 
@@ -381,10 +381,10 @@ tests/android/
     │ Validation  │       │    Android     │
     │    Jobs     │       │   Emulator     │
     │             │       │                │
-    │ ✓ Python    │       │ 1. Start emu   │
-    │ ✓ Node.js   │       │ 2. Install APK │
-    │ ✓ Structure │       │ 3. Scan modules│
-    │ ✓ Linting   │       │ 4. Run tests   │
+    │ - Python    │       │ 1. Start emu   │
+    │ - Node.js   │       │ 2. Install APK │
+    │ - Structure │       │ 3. Scan modules│
+    │ - Linting   │       │ 4. Run tests   │
     └──────┬──────┘       │ 5. Generate    │
            │              │    report      │
     ┌──────▼──────┐       └─────┬──────────┘
@@ -540,7 +540,7 @@ python scripts/ci/generate_module_report.py android tests reports
 
 ## Example: Adding a New Module
 
-Let's add a "Notifications" module for Android:
+To add a "Notifications" module for Android:
 
 ```bash
 # 1. Create module folder

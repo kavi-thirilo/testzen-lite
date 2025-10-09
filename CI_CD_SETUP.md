@@ -369,4 +369,4 @@ No additional setup needed.
 - **Cost** $0/month
 - **Fast** execution with KVM acceleration
 
-**You're all set!** Push your changes and watch the magic happen.
+Push your changes to trigger the automated pipeline.

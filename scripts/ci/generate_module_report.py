@@ -390,14 +390,14 @@ class ModuleReportGenerator:
         html_file = self.reports_dir / f"{self.platform}_test_report.html"
         with open(html_file, 'w') as f:
             f.write(html_content)
-        print(f"✓ HTML report saved: {html_file}")
+        print(f"HTML report saved: {html_file}")
 
         # Generate JSON report
         json_data = self.generate_json_report(modules)
         json_file = self.reports_dir / f"{self.platform}_test_report.json"
         with open(json_file, 'w') as f:
             json.dump(json_data, f, indent=2)
-        print(f"✓ JSON report saved: {json_file}")
+        print(f"JSON report saved: {json_file}")
 
         return html_file, json_file
 

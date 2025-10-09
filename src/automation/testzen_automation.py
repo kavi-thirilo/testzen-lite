@@ -1033,39 +1033,93 @@ class TestZenAutomation:
                 print(f"[TZ] Error during cleanup: {cleanup_error}")
 
     def _detect_app_package(self):
-        """Detect and set the current app package from APK"""
+        """Detect and set the current app package from APK/IPA"""
         try:
             from src.utils.package_detector import PackageDetector
             detector = PackageDetector()
-
-            # Try to find APK in build folder
             import glob
-            apk_files = glob.glob('build/**/*.apk', recursive=True)
+            import os
 
-            if apk_files:
-                apk_path = apk_files[0]  # Use first APK found
-                package = detector.get_package_from_apk(apk_path)
+            # Determine platform and expected app folder
+            platform = self.config.get('platform', 'android').lower()
+
+            if platform == 'android':
+                app_folder = 'apps/android'
+                app_extension = '*.apk'
+                app_type = 'APK'
+            elif platform == 'ios':
+                app_folder = 'apps/ios'
+                app_extension = '*.ipa'
+                app_type = 'IPA'
+            else:
+                self.color_logger.error(f"Unsupported platform: {platform}")
+                return False
+
+            # Search for app file in the correct platform folder
+            search_pattern = os.path.join(app_folder, app_extension)
+            app_files = glob.glob(search_pattern)
+
+            if not app_files:
+                # No app file found - fail fast with clear error message
+                self.color_logger.error(f"No {app_type} file found in {app_folder}/ folder")
+                self.color_logger.error("")
+                self.color_logger.error(f"Please place your {app_type} file in the {app_folder}/ folder before running tests.")
+                self.color_logger.error("")
+                self.color_logger.error("Instructions:")
+                if platform == 'android':
+                    self.color_logger.error("  1. Copy your APK file:")
+                    self.color_logger.error(f"     cp /path/to/your-app.apk {app_folder}/")
+                    self.color_logger.error("")
+                    self.color_logger.error("  2. Ensure only ONE APK file exists in the folder")
+                    self.color_logger.error("")
+                    self.color_logger.error("  3. Run tests again:")
+                    self.color_logger.error("     python testzen.py run --file tests/android/your-test.xlsx --platform android")
+                else:  # iOS
+                    self.color_logger.error("  1. Copy your IPA file (built for simulator):")
+                    self.color_logger.error(f"     cp /path/to/your-app.ipa {app_folder}/")
+                    self.color_logger.error("")
+                    self.color_logger.error("  2. Ensure only ONE IPA file exists in the folder")
+                    self.color_logger.error("")
+                    self.color_logger.error("  3. Run tests again:")
+                    self.color_logger.error("     python testzen.py run --file tests/ios/your-test.xlsx --platform ios")
+
+                return False
+
+            if len(app_files) > 1:
+                # Multiple app files found - warn user
+                self.color_logger.warning(f"Multiple {app_type} files found in {app_folder}/ folder:")
+                for app_file in app_files:
+                    self.color_logger.warning(f"  - {app_file}")
+                self.color_logger.warning(f"Using: {app_files[0]}")
+                self.color_logger.warning("")
+                self.color_logger.warning(f"Recommendation: Keep only ONE {app_type} file in {app_folder}/ folder")
+
+            # Use the first app file found
+            app_path = app_files[0]
+            self.color_logger.success(f"Found {app_type}: {os.path.basename(app_path)}")
+
+            # Extract package name from app file
+            if platform == 'android':
+                package = detector.get_package_from_apk(app_path)
                 if package:
                     self.current_app_package = package
                     self.color_logger.success(f"Detected app package: {package}")
                     return True
-
-            # Fallback: check for any third-party installed packages (exclude system apps)
-            installed_packages = detector.get_installed_packages()
-            third_party_packages = [pkg for pkg in installed_packages
-                                   if not pkg.startswith(('com.android.', 'com.google.', 'android.'))]
-
-            if third_party_packages:
-                # Use the first non-system package found
-                self.current_app_package = third_party_packages[0]
-                self.color_logger.info(f"Using installed package: {self.current_app_package}")
+                else:
+                    self.color_logger.error(f"Failed to extract package name from APK: {app_path}")
+                    return False
+            else:  # iOS
+                # For iOS, we'll need to extract the bundle ID from IPA
+                # This requires additional implementation in package_detector.py
+                # For now, we'll set a placeholder and return True
+                self.color_logger.warning("iOS IPA detection not fully implemented yet")
+                self.current_app_package = "com.example.app"  # Placeholder
                 return True
-
-            self.color_logger.warning("Could not detect app package. Please specify package name in test file or ensure APK is in build/ folder.")
-            return False
 
         except Exception as e:
             self.color_logger.error(f"Package detection failed: {e}")
+            import traceback
+            self.color_logger.error(traceback.format_exc())
             return False
 
     def _switch_context_if_needed(self, step_number):
