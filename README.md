@@ -2,429 +2,706 @@
 
 **Mobile test automation without writing a single line of code. Just Excel files and APK/IPA.**
 
-> **Note:** This is the lite version of TestZen, focused on core mobile testing capabilities. Features removed: Appium Web Inspector, BDD Runner, API Testing, and demo examples.
+---
 
-## What is TestZen Lite?
+## Table of Contents
 
-TestZen Lite is a streamlined no-code mobile test automation framework that runs tests defined in Excel spreadsheets. Perfect for QA teams, testers, and anyone who wants automated mobile testing without programming.
-
-### Key Features
-- **No coding required** - Write tests in Excel
-- **Multi-platform** - Supports Android and iOS
-- **CI/CD ready** - Automated testing on GitHub Actions & GitLab CI
-- **Modular testing** - Organize tests by feature modules
-- **Professional reports** - HTML reports with screenshots
-- **Smart element finding** - Handles WebView and native apps
+- [What is TestZen Lite?](#what-is-testzen-lite)
+- [Key Features](#key-features)
+- [Quick Start Guide](#quick-start-guide)
+  - [Step 1: Installation](#step-1-installation)
+  - [Step 2: Add Your Mobile App](#step-2-add-your-mobile-app)
+  - [Step 3: Create Test Files](#step-3-create-test-files)
+  - [Step 4: Run Tests](#step-4-run-tests)
+- [Creating Excel Test Files](#creating-excel-test-files)
+  - [Excel File Structure](#excel-file-structure)
+  - [Available Test Actions](#available-test-actions)
+  - [Multi-Locator Fallback System](#multi-locator-fallback-system)
+- [Running Tests](#running-tests)
+  - [Local Test Execution](#local-test-execution)
+  - [Auto-Appium Mode](#auto-appium-mode)
+  - [Command Line Options](#command-line-options)
+- [Viewing Test Reports](#viewing-test-reports)
+  - [HTML Report](#html-report)
+  - [Excel Report](#excel-report)
+  - [Understanding Results](#understanding-results)
+- [CI/CD Integration](#cicd-integration)
+  - [GitHub Actions](#github-actions)
+  - [GitLab CI](#gitlab-ci)
+- [Test Organization](#test-organization)
+- [Troubleshooting](#troubleshooting)
+- [Advanced Features](#advanced-features)
+- [Complete Documentation](#complete-documentation)
 
 ---
 
-## Installation
+## What is TestZen Lite?
 
-### Step 1: Clone the Repository
+TestZen Lite is a no-code mobile test automation framework that allows you to create and run automated tests for Android and iOS apps using Excel spreadsheets. No programming knowledge required.
+
+**Perfect for:**
+- QA Testers without programming experience
+- Manual testers wanting to automate their tests
+- Teams needing quick test automation setup
+- Projects requiring CI/CD automated testing
+
+---
+
+## Key Features
+
+- **No Coding Required** - Write all test steps in Excel spreadsheets
+- **Multi-Platform** - Test both Android and iOS applications
+- **Auto-Appium** - Automatic Appium server management (no manual setup needed)
+- **Multi-Locator Fallback** - Automatic fallback to alternative element locators
+- **Professional Reports** - HTML and Excel reports with screenshots
+- **CI/CD Ready** - Pre-configured for GitHub Actions and GitLab CI
+- **Smart Element Finding** - Handles both native and WebView applications
+- **Module Organization** - Organize tests by features for better maintenance
+
+---
+
+## Quick Start Guide
+
+### Step 1: Installation
+
+**Prerequisites:**
+- Python 3.7 or higher installed on your computer
+- Node.js and npm installed (for Appium)
+
+**1.1 Clone or Download the Repository**
 
 ```bash
 git clone https://github.com/kavi-thirilo/testzen-lite.git
 cd testzen-lite
 ```
 
-### Step 2: Install Python Dependencies
+**1.2 Install Python Dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3: Install Appium
+**1.3 Install Appium**
 
 ```bash
 npm install -g appium
-appium driver install uiautomator2  # For Android
-appium driver install xcuitest      # For iOS (macOS only)
+appium driver install uiautomator2  # For Android testing
+appium driver install xcuitest      # For iOS testing (macOS only)
 ```
 
-### Step 4: Verify Installation
+**1.4 Verify Installation**
 
 ```bash
 python testzen.py --help
 ```
 
-**What you get:**
-```
-testzen-lite/
-├── apps/
-│   ├── android/          # Place your APK here
-│   └── ios/              # Place your IPA here
-├── tests/
-│   ├── android/          # Your Android test Excel files
-│   └── ios/              # Your iOS test Excel files
-├── reports/              # Generated test reports
-├── testzen.py            # Main executable
-├── .github/workflows/    # CI/CD ready to use
-└── .gitlab-ci.yml        # GitLab CI configuration
-```
+You should see the TestZen help menu with available commands.
 
 ---
 
-## Getting Started
+### Step 2: Add Your Mobile App
 
-### 1. Remove Example Tests (Optional)
+**For Android (APK):**
 
-```bash
-# Remove example test files
-rm -rf tests/android/billing
-rm -rf tests/android/login
-rm -rf tests/android/checkout
-```
-
-### 2. Create Your Test Module
+1. Locate your Android APK file (usually in `app/build/outputs/apk/` folder of your Android project)
+2. Copy the APK file to the `apps/android/` folder in TestZen
 
 ```bash
-# Create module for your feature
-mkdir -p tests/android/my_feature
-```
-
-### 3. Add Your Test Files
-
-- Create Excel files following the format in [Quick Start](#quick-start)
-- Copy to `tests/android/my_feature/my_test.xlsx`
-
-### 4. Add Your Mobile App
-
-```bash
-# Copy your APK
 cp /path/to/your-app.apk apps/android/
+```
 
-# Or copy your IPA
+**For iOS (IPA):**
+
+1. Locate your iOS IPA file
+2. Copy the IPA file to the `apps/ios/` folder in TestZen
+
+```bash
 cp /path/to/your-app.ipa apps/ios/
 ```
 
-### 5. Run Your First Test
-
-```bash
-python testzen.py run --file tests/android/my_feature/my_test.xlsx --platform android
-```
-
-### 6. Enable CI/CD (Optional)
-
-Push to your GitHub/GitLab repository - tests will run automatically!
-
-```bash
-git remote set-url origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-git add .
-git commit -m "Add my mobile tests"
-git push -u origin main
-```
+**Important Notes:**
+- Place only ONE APK file in the `apps/android/` folder
+- Place only ONE IPA file in the `apps/ios/` folder
+- TestZen will automatically detect and use your app file
 
 ---
 
-## Quick Start
+### Step 3: Create Test Files
 
-### 1. Test Organization
+**3.1 Create a Test Module Folder**
 
-Place your test files in module folders:
+Organize your tests by feature (e.g., login, checkout, profile):
 
-```
-tests/
-├── android/
-│   ├── login/                    # Login feature tests
-│   │   └── login_test.xlsx
-│   ├── checkout/                 # Checkout feature tests
-│   │   └── checkout_test.xlsx
-│   └── settings/                 # Settings tests
-│       └── preferences_test.xlsx
-├── ios/
-│   ├── login/
-│   │   └── login_test.xlsx
-│   └── dashboard/
-│       └── dashboard_test.xlsx
+```bash
+mkdir -p tests/android/login
 ```
 
-**Why modules?** Organize tests by features (login, checkout, profile) for better maintainability and reporting.
+**3.2 Create an Excel Test File**
 
-### 2. App Binaries
+1. Open Excel or Google Sheets
+2. Create a new spreadsheet with these columns:
 
-Place your mobile app files here:
+| S.No | Description | Action | Locator Type | Locator Value | Locator Value 2 | Locator Value 3 | Input Data | Status | Result Message |
+|------|-------------|--------|--------------|---------------|-----------------|-----------------|------------|--------|----------------|
 
+3. Add your test steps (see [Creating Excel Test Files](#creating-excel-test-files) for details)
+4. Save as `login_test.xlsx` in `tests/android/login/` folder
+
+**Example Test File:**
+
+| S.No | Description | Action | Locator Type | Locator Value | Locator Value 2 | Locator Value 3 | Input Data | Status | Result Message |
+|------|-------------|--------|--------------|---------------|-----------------|-----------------|------------|--------|----------------|
+| 1 | Enter username | input | xpath | //android.widget.EditText[@hint="Username"] | //android.widget.EditText[@resource-id="username"] | //android.widget.EditText[1] | testuser@test.com | | |
+| 2 | Enter password | input | xpath | //android.widget.EditText[@hint="Password"] | //android.widget.EditText[@resource-id="password"] | //android.widget.EditText[2] | Test@123 | | |
+| 3 | Click Login | click | xpath | //android.widget.Button[@text='Login'] | | | | | |
+| 4 | Verify welcome | verify | id | welcome_message | | | | | |
+
+---
+
+### Step 4: Run Tests
+
+**Option A: Auto-Appium Mode (Recommended for Beginners)**
+
+TestZen automatically starts and stops the Appium server for you:
+
+```bash
+python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium
 ```
-apps/
-├── android/
-│   └── your-app.apk         # Android app to test
-└── ios/
-    └── your-app.ipa         # iOS app to test
+
+**Option B: Manual Appium Mode**
+
+Start Appium server manually in one terminal:
+
+```bash
+appium
 ```
 
-**Important:** Only one APK or IPA per platform.
+Run tests in another terminal:
 
-### 3. Excel Test Format
+```bash
+python testzen.py run --file tests/android/login/login_test.xlsx
+```
 
-Your test Excel files should have these columns:
+**View Results:**
 
-| Column | Name | Description | Example |
-|--------|------|-------------|---------|
-| **A** | Step Number | Sequential step number | 1, 2, 3... |
-| **B** | Action | What to do | `click`, `input`, `verify` |
-| **C** | Locator Type | How to find element | `xpath`, `id`, `accessibility id` |
-| **D** | Locator Value | Element identifier | `//android.widget.Button[@text='Login']` |
-| **E** | Input Data | Data to enter (for `input` action) | `testuser@example.com` |
-| **F** | Expected Result | What should happen | `Login successful` |
+After test execution completes:
+- HTML Report: Open `reports/android_test_report.html` in your browser
+- Excel Report: Check the Status column in your test Excel file
 
-**Example Test:**
+---
 
-| Step | Action | Locator Type | Locator Value | Input Data | Expected Result |
-|------|--------|--------------|---------------|------------|-----------------|
-| 1 | input | id | username_field | john@example.com | Username entered |
-| 2 | input | id | password_field | password123 | Password entered |
-| 3 | click | xpath | //android.widget.Button[@text='Login'] | | Button clicked |
-| 4 | verify | id | welcome_message | | Login successful |
+## Creating Excel Test Files
 
-**Common Actions:**
-- `input` - Type text into a field
-- `click` - Tap an element
-- `verify` - Check if element exists
-- `wait` - Pause for seconds
-- `scroll` - Scroll up/down
+### Excel File Structure
 
-See [docs/SUPPORTED_ACTIONS.md](docs/SUPPORTED_ACTIONS.md) for complete list.
+Your Excel test file must have two sheets:
+
+**Sheet 1: Test_Summary** (auto-generated, you can leave empty)
+**Sheet 2: TestCases** (your test steps go here)
+
+### TestCases Sheet Columns
+
+| Column | Name | Required | Description | Example |
+|--------|------|----------|-------------|---------|
+| A | S.No | Yes | Step number (1, 2, 3...) | 1 |
+| B | Description | Yes | What this step does | Enter username |
+| C | Action | Yes | Type of action to perform | input |
+| D | Locator Type | Yes | How to find the element | xpath |
+| E | Locator Value | Yes | Primary locator | //android.widget.EditText[@hint="Username"] |
+| F | Locator Value 2 | No | Fallback locator 1 | //android.widget.EditText[@resource-id="username"] |
+| G | Locator Value 3 | No | Fallback locator 2 | //android.widget.EditText[1] |
+| H | Input Data | No | Data to enter (for input action) | john@example.com |
+| I | Status | No | Auto-filled after test run | PASSED/FAILED |
+| J | Result Message | No | Auto-filled after test run | Error details |
+
+### Available Test Actions
+
+| Action | Description | Requires Locator | Requires Input Data | Example |
+|--------|-------------|------------------|---------------------|---------|
+| **input** | Type text into a field | Yes | Yes | Enter email address |
+| **click** | Tap/click an element | Yes | No | Click login button |
+| **verify** | Check if element exists | Yes | No | Verify welcome message |
+| **wait** | Pause for X seconds | No | Yes (seconds) | Wait 3 seconds |
+| **scroll** | Scroll up or down | No | Yes (up/down) | Scroll down |
+| **swipe** | Swipe in a direction | No | Yes (left/right/up/down) | Swipe left |
+| **long_press** | Long press an element | Yes | No | Long press menu item |
+
+**See [docs/SUPPORTED_ACTIONS.md](docs/SUPPORTED_ACTIONS.md) for complete list of actions.**
+
+### Multi-Locator Fallback System
+
+TestZen supports up to 3 fallback locators per step. This ensures tests work across different environments (local, CI/CD, different Android versions).
+
+**Why use multiple locators?**
+- Local environment might find elements using `@hint` attribute
+- CI/CD environment might need `@resource-id` instead
+- Provides automatic fallback if primary locator fails
+
+**How it works:**
+1. TestZen tries **Locator Value** first
+2. If that fails, tries **Locator Value 2**
+3. If that fails, tries **Locator Value 3**
+4. Reports show which locator succeeded
+
+**Example:**
+
+| Locator Value | Locator Value 2 | Locator Value 3 |
+|---------------|-----------------|-----------------|
+| //android.widget.EditText[@hint="Password"] | //android.widget.EditText[@resource-id="password"] | //android.widget.EditText[2] |
+
+**See [docs/MULTI_LOCATOR_GUIDE.md](docs/MULTI_LOCATOR_GUIDE.md) for detailed guide.**
 
 ---
 
 ## Running Tests
 
-### Local Execution
+### Local Test Execution
 
+**Prerequisites for Local Testing:**
+
+**For Android:**
+- Android device connected via USB with USB debugging enabled, OR
+- Android emulator running
+- Run `adb devices` to verify device is connected
+
+**For iOS:**
+- macOS computer (required for iOS testing)
+- Xcode installed
+- iOS simulator running or iOS device connected
+- Run `xcrun simctl list` to see available simulators
+
+### Auto-Appium Mode
+
+The easiest way to run tests - TestZen handles Appium server automatically:
+
+**Run a specific test:**
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run a specific test
-python testzen.py run --file tests/android/login/login_test.xlsx --platform android
-
-# Run all Android tests
-python testzen.py run --platform android
-
-# Run all iOS tests
-python testzen.py run --platform ios
+python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium
 ```
 
-**Prerequisites:**
-- Android: Connected device/emulator with USB debugging enabled
-- iOS: macOS with Xcode and connected device/simulator
-- Appium installed (`npm install -g appium`)
+**Run all tests in a module:**
+```bash
+python testzen.py run --file tests/android/login/*.xlsx --auto-appium
+```
 
-### CI/CD Automation
+**Keep Appium running after tests (for multiple test runs):**
+```bash
+python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium --keep-appium
+```
 
-Tests run automatically in your CI/CD pipeline:
+### Command Line Options
 
-#### GitHub Actions (Android)
+**Basic Commands:**
 
-**Triggers:**
-- Every push to `main`, `develop` branches
-- Pull requests to `main`
-- Nightly at 9 PM CST
-- Manual workflow dispatch
+```bash
+# Run specific test file
+python testzen.py run --file tests/android/login/login_test.xlsx
 
-**Configuration:** `.github/workflows/android-tests.yml`
+# Run all Android tests
+python testzen.py run --all --platform android
 
-**What happens:**
-1. Spins up Android emulator (API 29)
-2. Installs your APK from `apps/android/`
-3. Runs all tests in `tests/android/*/`
-4. Generates HTML report
-5. Uploads reports as artifacts
+# Run all iOS tests
+python testzen.py run --all --platform ios
 
-**View results:**
-1. Go to **Actions** tab in GitHub
-2. Click latest workflow run
-3. Download **android-test-reports** artifact
-4. Open `android_test_report.html`
+# List available tests
+python testzen.py list --platform android
+```
 
-#### GitLab CI (Android & iOS)
+**Advanced Options:**
 
-**Android - Automated:**
-- Triggers on every push to `main`
-- Uses GitLab runner with `android` tag
-- Auto-runs if runner available
+```bash
+# Auto-start Appium server
+--auto-appium
 
-**iOS - Manual Trigger:**
-- Go to **CI/CD → Pipelines**
-- Click Play on `test:ios:manual` job
-- Requires macOS runner with `ios` tag
+# Keep Appium running after tests
+--keep-appium
 
-**Why manual iOS?**
-- iOS testing requires macOS runners with Xcode
-- Not all GitLab instances have macOS runners
-- Manual trigger prevents pipeline blocking
+# Disable screenshots
+--screenshots no
 
-**Configuration:** `.gitlab-ci.yml`
+# Continue on failure instead of stopping
+--skip-on-fail
 
-**View results:**
-1. Go to **CI/CD → Pipelines**
-2. Click pipeline number
-3. Click **Browse** under job artifacts
-4. Open `reports/android_test_report.html`
+# Use specific device
+--device emulator-5554
+
+# Launch specific emulator
+--avd Pixel_4_API_30
+
+# Disable auto-launch emulator
+--no-auto-launch
+```
+
+**Example with Multiple Options:**
+
+```bash
+python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium --skip-on-fail --device emulator-5554
+```
 
 ---
 
-## Multi-Module Testing
+## Viewing Test Reports
+
+After running tests, TestZen generates two types of reports:
+
+### HTML Report
+
+**Location:** `reports/android_test_report.html` or `reports/ios_test_report.html`
+
+**How to view:**
+1. Navigate to the `reports/` folder
+2. Double-click the HTML file to open in your browser
+3. View detailed test results with screenshots
+
+**What's included:**
+- Test execution summary (passed/failed/total)
+- Step-by-step execution details
+- Screenshots for each step (before and after)
+- Exact locator used for each element
+- Execution time for each step
+- Error messages for failed steps
+- Device and app information
+
+**Understanding the Report:**
+
+- **Green rows** = Passed steps
+- **Red rows** = Failed steps
+- **Yellow rows** = Skipped steps
+- **Locator info** shows which fallback locator was used (if any)
+  - Example: `xpath: //EditText[@resource-id="password"] (Found on attempt 2/3 from Locator Value 2)`
+
+### Excel Report
+
+**Location:** Your original test Excel file
+
+**How to view:**
+1. Open your test Excel file (e.g., `tests/android/login/login_test.xlsx`)
+2. Look at the TestCases sheet
+3. Check the **Status** and **Result Message** columns
+
+**Status Column Colors:**
+- **Light Green** = PASSED (dark green text)
+- **Light Red** = FAILED (dark red text)
+- **Light Yellow** = SKIP (dark yellow text)
+
+**Test_Summary Sheet:**
+- Automatically generated after test run
+- Shows overall test statistics
+- Execution date and time
+- Pass/fail breakdown
+- Success rate percentage
+
+### Understanding Results
+
+**Test Passed:**
+- Status shows PASSED in green
+- HTML report shows green rows
+- All test steps completed successfully
+
+**Test Failed:**
+- Status shows FAILED in red
+- HTML report shows red row for failed step
+- Result Message shows error details
+- Screenshot shows app state when failure occurred
+
+**Common Failure Reasons:**
+- Element not found (locator incorrect or element not visible)
+- Timeout (element took too long to appear)
+- App crash or unexpected behavior
+- Network issues
+
+---
+
+## CI/CD Integration
+
+TestZen comes pre-configured for automated testing in CI/CD pipelines.
+
+### GitHub Actions
+
+**Automatic Setup:**
+- Already configured in `.github/workflows/android-tests.yml`
+- Tests run automatically on every push to `main` or `develop`
+- Tests run on all pull requests to `main`
+- Nightly tests at 9 PM CST
+
+**How to Enable:**
+
+1. Push your code to GitHub:
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git add .
+git commit -m "Add automated tests"
+git push -u origin main
+```
+
+2. GitHub Actions will automatically run your tests
+
+**View Results:**
+
+1. Go to your GitHub repository
+2. Click the **Actions** tab
+3. Click on the latest workflow run
+4. Download the **android-test-reports** artifact (ZIP file)
+5. Extract and open `android_test_report.html`
+
+**What Happens in GitHub Actions:**
+1. Spins up Ubuntu runner with Android emulator
+2. Installs your APK from `apps/android/` folder
+3. Runs all test files in `tests/android/` folders
+4. Generates HTML report
+5. Uploads report as downloadable artifact
+6. Marks build as passed/failed based on test results
+
+### GitLab CI
+
+**Automatic Setup:**
+- Already configured in `.gitlab-ci.yml`
+- Android tests run automatically on push to `main`
+- iOS tests are manual trigger (requires macOS runner)
+
+**How to Enable:**
+
+1. Push your code to GitLab:
+```bash
+git remote add origin https://gitlab.com/YOUR_USERNAME/YOUR_REPO.git
+git add .
+git commit -m "Add automated tests"
+git push -u origin main
+```
+
+2. GitLab CI will automatically run Android tests if runner is available
+
+**View Results:**
+
+1. Go to your GitLab repository
+2. Click **CI/CD** → **Pipelines**
+3. Click on the latest pipeline
+4. Click **Browse** next to job artifacts
+5. Navigate to `reports/` folder
+6. Download and open `android_test_report.html`
+
+**iOS Testing (Manual Trigger):**
+
+1. Go to **CI/CD** → **Pipelines**
+2. Click the play button on `test:ios:manual` job
+3. Wait for macOS runner to execute tests
+4. Download artifacts same as Android
+
+**Why is iOS manual?**
+- iOS testing requires macOS runners with Xcode
+- Not all GitLab instances have macOS runners
+- Manual trigger prevents blocking the pipeline
+
+---
+
+## Test Organization
+
+Organize your tests by features/modules for better maintainability:
+
+**Recommended Structure:**
+
+```
+tests/
+├── android/
+│   ├── login/                  # All login-related tests
+│   │   ├── basic_login.xlsx
+│   │   ├── social_login.xlsx
+│   │   └── forgot_password.xlsx
+│   ├── checkout/               # Shopping cart tests
+│   │   ├── add_to_cart.xlsx
+│   │   ├── payment.xlsx
+│   │   └── coupon_code.xlsx
+│   ├── profile/                # User profile tests
+│   │   ├── edit_profile.xlsx
+│   │   └── change_password.xlsx
+│   └── settings/               # App settings tests
+│       └── preferences.xlsx
+└── ios/
+    ├── login/
+    │   └── login_test.xlsx
+    └── dashboard/
+        └── dashboard_test.xlsx
+```
 
 **Benefits:**
-- Organize tests by feature (login, checkout, profile)
-- Parallel test execution (future)
-- Better reporting - see results per module
-- Easier maintenance
+- Easy to find specific tests
+- Better reporting (results grouped by module)
+- Team collaboration (different people work on different modules)
+- Easier maintenance (update related tests together)
 
-**Example structure:**
-
-```
-tests/android/
-├── login/              # All login-related tests
-│   ├── basic_login.xlsx
-│   └── social_login.xlsx
-├── checkout/           # Shopping cart tests
-│   ├── add_to_cart.xlsx
-│   └── payment.xlsx
-└── profile/            # User profile tests
-    └── edit_profile.xlsx
-```
-
-**Report shows:**
-- Total tests per module
+**Module Reports:**
+When you run all tests, the report shows results per module:
+- Total tests in each module
 - Pass/fail breakdown by module
 - Execution time per module
 
 ---
 
-## Understanding Test Reports
-
-After test execution, find reports in:
-
-**Local:** `reports/` directory
-**CI/CD:** Download from artifacts
-
-**Report includes:**
-- Test summary (passed/failed/total)
-- Step-by-step execution details
-- Screenshots of each step
-- Execution time and timestamps
-- Device and app information
-
----
-
 ## Troubleshooting
 
-### Tests failing locally?
+### Tests Not Running
 
-1. **Check device connection:**
+**Problem: "No device connected" error**
+
+Solution:
+```bash
+# For Android
+adb devices  # Should show at least one device
+
+# If no devices shown:
+# 1. Enable USB debugging on your Android device
+# 2. Connect via USB
+# 3. Accept USB debugging prompt on device
+```
+
+**Problem: "Appium server not running" error**
+
+Solution:
+```bash
+# Option 1: Use auto-appium mode
+python testzen.py run --file your_test.xlsx --auto-appium
+
+# Option 2: Start Appium manually
+appium  # In a separate terminal window
+```
+
+**Problem: "APK not found" error**
+
+Solution:
+```bash
+# Check if APK exists
+ls apps/android/*.apk
+
+# If no APK found, copy your APK:
+cp /path/to/your-app.apk apps/android/
+```
+
+### Element Not Found Errors
+
+**Problem: Test fails with "Element not found"**
+
+Solution:
+1. Use Appium Inspector to find correct locator
+2. Add multiple fallback locators (Locator Value 2, Locator Value 3)
+3. Add a `wait` step before trying to find the element
+4. Verify the element is visible on screen (not scrolled off-screen)
+
+**Example Fix:**
+
+| S.No | Description | Action | Locator Type | Locator Value | Locator Value 2 | Locator Value 3 |
+|------|-------------|--------|--------------|---------------|-----------------|-----------------|
+| 1 | Wait for login screen | wait | | | | 3 |
+| 2 | Enter username | input | xpath | //EditText[@hint="Username"] | //EditText[@resource-id="username"] | //EditText[1] |
+
+### Slow Test Execution
+
+**Problem: Tests run very slowly**
+
+Solutions:
+1. Reduce wait times in test steps
+2. Use `--no-cleanup` to skip cleanup operations
+3. Disable screenshots: `--screenshots no`
+4. Use a faster emulator or real device
+
+### CI/CD Failures
+
+**Problem: Tests pass locally but fail in CI/CD**
+
+Common causes:
+1. **Different locators work in different environments**
+   - Solution: Use multi-locator fallback system
+   - Add resource-id based locators as Locator Value 2
+
+2. **Timing issues (elements appear slower in CI)**
+   - Solution: Add wait steps before critical elements
+   - Increase timeout values
+
+3. **APK not committed to repository**
+   - Solution: Ensure APK is committed:
    ```bash
-   adb devices  # Should show your device
+   git add apps/android/your-app.apk
+   git commit -m "Add APK for testing"
+   git push
    ```
-
-2. **Check Appium server:**
-   ```bash
-   appium  # Should start on port 4723
-   ```
-
-3. **Check APK exists:**
-   ```bash
-   ls apps/android/*.apk  # Should show your APK
-   ```
-
-### CI/CD tests failing?
-
-1. **Check runner availability:**
-   - Android: Needs runner with `android` tag
-   - iOS: Needs macOS runner with `ios`, `macos` tags
-
-2. **Check APK/IPA committed:**
-   ```bash
-   git ls-files apps/android/
-   git ls-files apps/ios/
-   ```
-
-3. **Check workflow logs:**
-   - GitHub: Actions → Click workflow → View logs
-   - GitLab: CI/CD → Pipelines → Click job → View logs
-
-### Element not found errors?
-
-1. **Use correct locator type:**
-   - Android: `xpath`, `id`, `accessibility id`
-   - iOS: `xpath`, `accessibility id`, `class name`
-
-2. **Verify locator in app:**
-   - Use Appium Inspector to find correct locators
-   - Test locators before adding to Excel
-
-3. **Add wait time:**
-   - Use `wait` action before finding elements
-   - Default: Framework waits 10s automatically
 
 ---
 
-## Advanced Configuration
+## Advanced Features
+
+### Auto-Appium Server Management
+
+TestZen can automatically start and stop the Appium server:
+
+```bash
+# Auto-start and auto-stop
+python testzen.py run --file test.xlsx --auto-appium
+
+# Auto-start but keep running (for multiple test runs)
+python testzen.py run --file test.xlsx --auto-appium --keep-appium
+```
+
+**Benefits:**
+- No need to manually start Appium server
+- Server automatically stopped after tests
+- Saves time and reduces setup complexity
+
+### Emulator Management
+
+TestZen can automatically launch Android emulators:
+
+```bash
+# List available emulators
+python testzen.py emulator list
+
+# Launch default emulator
+python testzen.py emulator launch
+
+# Launch specific emulator
+python testzen.py emulator launch --avd Pixel_4_API_30
+
+# Stop running emulator
+python testzen.py emulator stop
+```
+
+### Skip on Failure Mode
+
+Continue running tests even if a step fails:
+
+```bash
+python testzen.py run --file test.xlsx --skip-on-fail
+```
+
+**When to use:**
+- Running multiple independent test steps
+- Want to see all failures, not just the first one
+- Testing in development/debugging mode
 
 ### Custom Wait Times
 
-Edit `config/wait_config.py`:
+Edit `config/wait_config.py` to adjust wait times:
 
 ```python
-DEFAULT_WAIT = 10        # Element find timeout
-WEBVIEW_WAIT = 30        # WebView load timeout
-CI_MULTIPLIER = 1.5      # Extra time in CI/CD
-```
-
-### Test Execution Control
-
-**Skip tests:** Rename folder to start with underscore:
-```
-tests/android/_disabled_module/  # Won't run
-```
-
-**Run specific module:**
-```bash
-python testzen.py run --file tests/android/login/*.xlsx --platform android
+DEFAULT_WAIT = 10        # Element find timeout (seconds)
+WEBVIEW_WAIT = 30        # WebView load timeout (seconds)
+CI_MULTIPLIER = 1.5      # Extra time multiplier for CI/CD
 ```
 
 ---
 
 ## Complete Documentation
 
-- **[Supported Actions](docs/SUPPORTED_ACTIONS.md)** - All available test actions
-- **[Multi-Module Guide](MULTI_MODULE_GUIDE.md)** - Detailed module organization
-- **[CI/CD Setup](CI_CD_SETUP.md)** - Complete CI/CD configuration guide
-- **[CLI Usage](docs/CLI_USAGE.md)** - Command line interface guide
+**Guides:**
+- [Multi-Locator Guide](docs/MULTI_LOCATOR_GUIDE.md) - Complete guide for fallback locators
+- [Supported Actions](docs/SUPPORTED_ACTIONS.md) - All available test actions
+- [CLI Usage](docs/CLI_USAGE.md) - Command line reference
+- [CI/CD Setup](CI_CD_SETUP.md) - Detailed CI/CD configuration
 
----
-
-## Example Test Scenarios
-
-**Login Test** (`tests/android/login/login_test.xlsx`):
-
-| Step | Action | Locator Type | Locator Value | Input Data | Expected |
-|------|--------|--------------|---------------|------------|----------|
-| 1 | input | xpath | //android.widget.EditText[@resource-id="username"] | testuser@example.com | Username entered |
-| 2 | input | xpath | //android.widget.EditText[@resource-id="password"] | Test@123 | Password entered |
-| 3 | click | xpath | //android.widget.Button[@text='Sign In'] | | Button clicked |
-| 4 | wait | | | 3 | Wait for login |
-| 5 | verify | id | welcome_message | | Login success |
-
-**Form Validation** (`tests/android/checkout/checkout_test.xlsx`):
-
-| Step | Action | Locator Type | Locator Value | Input Data | Expected |
-|------|--------|--------------|---------------|------------|----------|
-| 1 | click | id | checkout_button | | Navigate to checkout |
-| 2 | input | xpath | //android.widget.EditText[@hint='Card Number'] | 4111111111111111 | Card entered |
-| 3 | input | xpath | //android.widget.EditText[@hint='CVV'] | 123 | CVV entered |
-| 4 | click | id | submit_payment | | Payment submitted |
-| 5 | verify | xpath | //*[@text='Payment Successful'] | | Payment confirmed |
-
----
-
-## Need Help?
-
-- **Issues:** [GitHub Issues](https://github.com/kavi-thirilo/testzen/issues)
-- **Documentation:** Check `docs/` folder
-- **CI/CD Guide:** See [CI_CD_SETUP.md](CI_CD_SETUP.md)
+**Support:**
+- [GitHub Issues](https://github.com/kavi-thirilo/testzen-lite/issues) - Report bugs or request features
+- [Documentation](docs/) - Additional guides and references
 
 ---
 
 **TestZen - Test Automation Made Simple**
+
+No coding required. Just Excel, your app, and automated tests.
