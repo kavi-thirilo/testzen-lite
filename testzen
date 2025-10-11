@@ -100,6 +100,24 @@ show_header() {
 # Main logic
 show_header "$1"
 
+# Early validation for test file before starting Appium
+if [ "$1" = "run" ] && [ "$2" = "--file" ]; then
+    TEST_FILE="$3"
+    if [ -n "$TEST_FILE" ]; then
+        # Check if file exists
+        if [ ! -f "$TEST_FILE" ]; then
+            testzen_log "ERROR" "Test file not found: $TEST_FILE"
+            exit 1
+        fi
+        # Check if file has .xlsx extension
+        if [[ ! "$TEST_FILE" =~ \.xlsx$ ]]; then
+            testzen_log "ERROR" "Invalid file format. Expected .xlsx file, got: $TEST_FILE"
+            testzen_log "INFO" "Please provide an Excel file (.xlsx)"
+            exit 1
+        fi
+    fi
+fi
+
 if needs_appium "$1"; then
     if ! check_appium; then
         testzen_log "WARNING" "Appium server is not running"

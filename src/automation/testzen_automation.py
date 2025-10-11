@@ -1015,8 +1015,11 @@ class TestZenAutomation:
             try:
                 self.color_logger.header("TEST EXECUTION SUMMARY")
                 self.color_logger.print_summary(self.passed_steps, self.failed_steps, total=self.total_steps)
-                
-                if self.failed_steps == 0:
+
+                # Only show success message if tests actually ran
+                if self.total_steps == 0:
+                    print("\n[TZ] NO TESTS EXECUTED - Setup or validation failed")
+                elif self.failed_steps == 0:
                     print("\n[TZ] ALL TESTS PASSED!")
                 else:
                     print(f"\n[TZ] {self.failed_steps} TEST(S) FAILED")

@@ -29,25 +29,25 @@ class TestZenCLI:
     
     def list_tests(self, platform=None):
         """List all available test files"""
-        pattern = "*.xlsx"
+        pattern = "**/*.xlsx"
         # Platform filtering is optional - if no platform-specific files found, return all
         if platform:
-            # First try platform-specific files
-            platform_pattern = f"*{platform.lower()}*.xlsx"
+            # First try platform-specific path
+            platform_pattern = f"{platform.lower()}/**/*.xlsx"
             test_files = []
             if self.tests_dir.exists():
-                test_files.extend(glob.glob(str(self.tests_dir / platform_pattern)))
-            
+                test_files.extend(glob.glob(str(self.tests_dir / platform_pattern), recursive=True))
+
             # If no platform-specific files found, return all files with a note
             if not test_files:
                 print(f"NOTE: No {platform}-specific test files found. Showing all available tests.")
                 if self.tests_dir.exists():
-                    test_files.extend(glob.glob(str(self.tests_dir / pattern)))
+                    test_files.extend(glob.glob(str(self.tests_dir / pattern), recursive=True))
         else:
             test_files = []
             if self.tests_dir.exists():
-                test_files.extend(glob.glob(str(self.tests_dir / pattern)))
-            
+                test_files.extend(glob.glob(str(self.tests_dir / pattern), recursive=True))
+
         return sorted(test_files)
     
     def run_single_test(self, test_file, config=None):
@@ -55,7 +55,13 @@ class TestZenCLI:
         if not os.path.exists(test_file):
             print(f"ERROR: Test file not found: {test_file}")
             return False
-            
+
+        # Validate file extension
+        if not test_file.endswith('.xlsx'):
+            print(f"ERROR: Invalid file format. Expected .xlsx file, got: {test_file}")
+            print(f"       Please provide an Excel file (.xlsx)")
+            return False
+
         print(f"RUNNING: TestZen Automation: {os.path.basename(test_file)}")
         print("=" * 60)
         
@@ -72,10 +78,10 @@ class TestZenCLI:
     def run_all_tests(self, platform=None, config=None):
         """Run all tests for a platform or all platforms"""
         test_files = self.list_tests(platform)
-        
+
         if not test_files:
             platform_msg = f" for platform '{platform}'" if platform else ""
-            self.logger.error(f"No test files found{platform_msg}")
+            print(f"ERROR: No test files found{platform_msg}")
             return False
             
         print(f"TESTZEN: Framework - Running {len(test_files)} test(s)")
@@ -275,7 +281,7 @@ Examples:
                 print(f"\nTOTAL: {len(tests)} test file(s)")
             else:
                 platform_msg = f" for platform '{args.platform}'" if args.platform else ""
-                self.logger.error(f"No test files found{platform_msg}")
+                print(f"ERROR: No test files found{platform_msg}")
                 
         elif args.command == 'inspector':
             cli.show_inspector_info()
