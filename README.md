@@ -92,7 +92,7 @@ appium driver install xcuitest      # For iOS testing (macOS only)
 **1.4 Verify Installation**
 
 ```bash
-python testzen.py --help
+./testzen --help
 ```
 
 You should see the TestZen help menu with available commands.
@@ -128,15 +128,25 @@ cp /path/to/your-app.ipa apps/ios/
 
 ### Step 3: Create Test Files
 
-**3.1 Create a Test Module Folder**
+**3.1 Use the Sample Test (Recommended for First-Time Users)**
 
-Organize your tests by feature (e.g., login, checkout, profile):
+TestZen includes a sample test file you can run immediately:
 
 ```bash
-mkdir -p tests/android/login
+# The sample test is already included at:
+# tests/android/billing/Payment_Form_Validation_Test.xlsx
 ```
 
-**3.2 Create an Excel Test File**
+**3.2 Create a New Test Module**
+
+To create your own tests, organize them by feature (e.g., billing, login, checkout):
+
+```bash
+# Create a module folder for your feature
+mkdir -p tests/android/your_module_name
+```
+
+**3.3 Create an Excel Test File**
 
 1. Open Excel or Google Sheets
 2. Create a new spreadsheet with these columns:
@@ -145,41 +155,45 @@ mkdir -p tests/android/login
 |------|-------------|--------|--------------|---------------|-----------------|-----------------|------------|--------|----------------|
 
 3. Add your test steps (see [Creating Excel Test Files](#creating-excel-test-files) for details)
-4. Save as `login_test.xlsx` in `tests/android/login/` folder
+4. Save as `your_test.xlsx` in `tests/android/your_module_name/` folder
 
-**Example Test File:**
+**Example Test File Structure:**
 
 | S.No | Description | Action | Locator Type | Locator Value | Locator Value 2 | Locator Value 3 | Input Data | Status | Result Message |
 |------|-------------|--------|--------------|---------------|-----------------|-----------------|------------|--------|----------------|
-| 1 | Enter username | input | xpath | //android.widget.EditText[@hint="Username"] | //android.widget.EditText[@resource-id="username"] | //android.widget.EditText[1] | testuser@test.com | | |
-| 2 | Enter password | input | xpath | //android.widget.EditText[@hint="Password"] | //android.widget.EditText[@resource-id="password"] | //android.widget.EditText[2] | Test@123 | | |
-| 3 | Click Login | click | xpath | //android.widget.Button[@text='Login'] | | | | | |
-| 4 | Verify welcome | verify | id | welcome_message | | | | | |
+| 1 | Enter email | input | xpath | //android.widget.EditText[@hint="Email"] | //android.widget.EditText[@resource-id="email"] | //android.widget.EditText[1] | test@example.com | | |
+| 2 | Enter card number | input | xpath | //android.widget.EditText[@hint="Card Number"] | //android.widget.EditText[@resource-id="cardNumber"] | //android.widget.EditText[2] | 4111111111111111 | | |
+| 3 | Click Submit | click | xpath | //android.widget.Button[@text='Submit Payment'] | //android.widget.Button[@resource-id="submit"] | | | | |
+| 4 | Verify success | verify | id | success_message | xpath | //android.widget.TextView[@text='Payment Successful'] | | | |
+
+**Note:** See the actual sample test file at `tests/android/billing/Payment_Form_Validation_Test.xlsx` for a working example.
 
 ---
 
 ### Step 4: Run Tests
 
-**Option A: Auto-Appium Mode (Recommended for Beginners)**
+**Option A: Using ./testzen Script (Recommended - Auto-Appium)**
 
-TestZen automatically starts and stops the Appium server for you:
+The `./testzen` script automatically manages the Appium server for you:
 
 ```bash
-python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium
+# Run the sample billing test
+./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx
+
+# Or run your own test
+./testzen run --file tests/android/your_module/your_test.xlsx
 ```
 
-**Option B: Manual Appium Mode**
+**Option B: Manual Python Command**
 
-Start Appium server manually in one terminal:
+If you prefer to manage Appium yourself:
 
 ```bash
+# Start Appium server manually in one terminal
 appium
-```
 
-Run tests in another terminal:
-
-```bash
-python testzen.py run --file tests/android/login/login_test.xlsx
+# Run tests in another terminal
+python testzen.py run --file tests/android/billing/Payment_Form_Validation_Test.xlsx
 ```
 
 **View Results:**
@@ -272,21 +286,21 @@ TestZen supports up to 3 fallback locators per step. This ensures tests work acr
 
 ### Auto-Appium Mode
 
-The easiest way to run tests - TestZen handles Appium server automatically:
+The easiest way to run tests - The `./testzen` script automatically handles the Appium server:
 
 **Run a specific test:**
 ```bash
-python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium
+./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx
 ```
 
 **Run all tests in a module:**
 ```bash
-python testzen.py run --file tests/android/login/*.xlsx --auto-appium
+./testzen run --file tests/android/billing/*.xlsx
 ```
 
-**Keep Appium running after tests (for multiple test runs):**
+**Run using Python directly with auto-appium flag:**
 ```bash
-python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium --keep-appium
+python testzen.py run --file tests/android/billing/Payment_Form_Validation_Test.xlsx --auto-appium
 ```
 
 ### Command Line Options
@@ -294,17 +308,17 @@ python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium -
 **Basic Commands:**
 
 ```bash
-# Run specific test file
-python testzen.py run --file tests/android/login/login_test.xlsx
+# Run specific test file (recommended - auto-manages Appium)
+./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx
 
 # Run all Android tests
-python testzen.py run --all --platform android
+./testzen run --all --platform android
 
 # Run all iOS tests
-python testzen.py run --all --platform ios
+./testzen run --all --platform ios
 
 # List available tests
-python testzen.py list --platform android
+./testzen list --platform android
 ```
 
 **Advanced Options:**
@@ -335,7 +349,7 @@ python testzen.py list --platform android
 **Example with Multiple Options:**
 
 ```bash
-python testzen.py run --file tests/android/login/login_test.xlsx --auto-appium --skip-on-fail --device emulator-5554
+./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx --skip-on-fail --device emulator-5554
 ```
 
 ---
@@ -498,30 +512,32 @@ git push -u origin main
 
 Organize your tests by features/modules for better maintainability:
 
-**Recommended Structure:**
+**Current Structure (with sample):**
 
 ```
 tests/
 ├── android/
-│   ├── login/                  # All login-related tests
+│   ├── billing/                 # Payment and billing tests (SAMPLE INCLUDED)
+│   │   └── Payment_Form_Validation_Test.xlsx
+│   ├── login/                   # Authentication tests (create your own)
 │   │   ├── basic_login.xlsx
 │   │   ├── social_login.xlsx
 │   │   └── forgot_password.xlsx
-│   ├── checkout/               # Shopping cart tests
+│   ├── checkout/                # Shopping cart tests (create your own)
 │   │   ├── add_to_cart.xlsx
 │   │   ├── payment.xlsx
 │   │   └── coupon_code.xlsx
-│   ├── profile/                # User profile tests
-│   │   ├── edit_profile.xlsx
-│   │   └── change_password.xlsx
-│   └── settings/               # App settings tests
-│       └── preferences.xlsx
+│   └── profile/                 # User profile tests (create your own)
+│       ├── edit_profile.xlsx
+│       └── change_password.xlsx
 └── ios/
     ├── login/
     │   └── login_test.xlsx
     └── dashboard/
         └── dashboard_test.xlsx
 ```
+
+**Note:** The `billing` module contains a working sample test. Other modules shown are examples for you to create.
 
 **Benefits:**
 - Easy to find specific tests
@@ -558,10 +574,13 @@ adb devices  # Should show at least one device
 
 Solution:
 ```bash
-# Option 1: Use auto-appium mode
+# Option 1: Use ./testzen script (auto-manages Appium)
+./testzen run --file your_test.xlsx
+
+# Option 2: Use Python with --auto-appium flag
 python testzen.py run --file your_test.xlsx --auto-appium
 
-# Option 2: Start Appium manually
+# Option 3: Start Appium manually
 appium  # In a separate terminal window
 ```
 
@@ -633,10 +652,13 @@ Common causes:
 TestZen can automatically start and stop the Appium server:
 
 ```bash
-# Auto-start and auto-stop
+# Recommended: Use ./testzen script (auto-manages Appium)
+./testzen run --file test.xlsx
+
+# Alternative: Use Python with --auto-appium flag
 python testzen.py run --file test.xlsx --auto-appium
 
-# Auto-start but keep running (for multiple test runs)
+# Keep Appium running after tests (for multiple test runs)
 python testzen.py run --file test.xlsx --auto-appium --keep-appium
 ```
 
@@ -651,16 +673,16 @@ TestZen can automatically launch Android emulators:
 
 ```bash
 # List available emulators
-python testzen.py emulator list
+./testzen emulator list
 
 # Launch default emulator
-python testzen.py emulator launch
+./testzen emulator launch
 
 # Launch specific emulator
-python testzen.py emulator launch --avd Pixel_4_API_30
+./testzen emulator launch --avd Pixel_4_API_30
 
 # Stop running emulator
-python testzen.py emulator stop
+./testzen emulator stop
 ```
 
 ### Skip on Failure Mode
@@ -668,7 +690,7 @@ python testzen.py emulator stop
 Continue running tests even if a step fails:
 
 ```bash
-python testzen.py run --file test.xlsx --skip-on-fail
+./testzen run --file test.xlsx --skip-on-fail
 ```
 
 **When to use:**
