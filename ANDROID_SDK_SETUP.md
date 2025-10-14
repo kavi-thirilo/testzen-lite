@@ -145,7 +145,90 @@ emulator -version
 
 ---
 
-## Issue 2: Install Appium UiAutomator2 Driver
+## Issue 2: Enable USB Debugging on Emulator
+
+### The Problem
+
+When you run `adb devices`, you might see:
+```
+List of devices attached
+emulator-5554    offline
+```
+or
+```
+List of devices attached
+emulator-5554    unauthorized
+```
+
+This means USB debugging is disabled on the emulator.
+
+### Automatic Fix (Easiest)
+
+```bash
+# Run the automated script
+./scripts/enable_usb_debugging.sh
+```
+
+This script will:
+- Find your running emulator
+- Enable developer options
+- Enable USB debugging
+- Restart adb server
+- Verify it worked
+
+### Manual Fix
+
+If the script doesn't work or you prefer manual setup:
+
+**Step 1: Enable Developer Options**
+
+1. Look at your emulator screen
+2. Open **Settings** app
+3. Scroll down to **About emulated device** (or **About phone**)
+4. Tap on **Build number** 7 times
+5. You'll see a message: "You are now a developer!"
+
+**Step 2: Enable USB Debugging**
+
+1. Go back to **Settings**
+2. Find **System** → **Developer options**
+3. Scroll down to **USB debugging**
+4. Toggle it **ON**
+5. If prompted, tap **OK** to allow USB debugging
+
+**Step 3: Restart ADB**
+
+```bash
+adb kill-server
+adb start-server
+sleep 3
+adb devices
+```
+
+You should now see:
+```
+List of devices attached
+emulator-5554    device
+```
+
+Notice it says **"device"** not "offline" or "unauthorized"!
+
+### For Physical Devices
+
+If you're using a real Android phone:
+
+1. Go to **Settings** → **About phone**
+2. Tap **Build number** 7 times
+3. Go back to **Settings** → **Developer options**
+4. Enable **USB debugging**
+5. Connect phone via USB cable
+6. Look at phone screen - you'll see a prompt "Allow USB debugging?"
+7. Check "Always allow from this computer" and tap **OK**
+8. Run `adb devices` - phone should show as "device"
+
+---
+
+## Issue 3: Install Appium UiAutomator2 Driver
 
 ### Step 1: Verify Appium is Installed
 

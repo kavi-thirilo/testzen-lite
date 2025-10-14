@@ -872,17 +872,42 @@ emulator -list-avds  # Should now show your emulator name
 
 ### Tests Not Running
 
-**Problem: "No device connected" error**
+**Problem: "No device connected" or "No devices found with device status"**
 
 Solution:
-```bash
-# For Android
-adb devices  # Should show at least one device
 
+**For Emulators:**
+
+```bash
+# Check if emulator is running but adb can't see it
+adb devices
+
+# If you see "emulator-5554" but with "offline" or "unauthorized" status,
+# USB debugging is disabled. Enable it automatically:
+
+# Option 1: Automatic fix (recommended)
+./scripts/enable_usb_debugging.sh
+
+# Option 2: Manual fix
+# 1. Look at the emulator screen
+# 2. Go to Settings → About emulated device
+# 3. Tap "Build number" 7 times (enables Developer options)
+# 4. Go back to Settings → System → Developer options
+# 5. Enable "USB debugging"
+# 6. Restart adb: adb kill-server && adb start-server
+# 7. Check: adb devices (should now show "device" not "offline")
+```
+
+**For Physical Devices:**
+
+```bash
 # If no devices shown:
-# 1. Enable USB debugging on your Android device
+# 1. Enable USB debugging on your Android device:
+#    - Settings → About phone → Tap "Build number" 7 times
+#    - Settings → Developer options → Enable "USB debugging"
 # 2. Connect via USB
-# 3. Accept USB debugging prompt on device
+# 3. Accept USB debugging prompt on device screen
+# 4. Check: adb devices
 
 # If still no devices and no emulator:
 # - You need Android SDK installed (see Android SDK Issues above)
