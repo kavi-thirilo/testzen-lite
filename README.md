@@ -79,7 +79,14 @@ cd testzen-lite
 **1.2 Install Python Dependencies**
 
 ```bash
-pip install -r requirements.txt
+# Try one of these commands (use whichever works on your system):
+pip3 install -r requirements.txt
+
+# OR if pip3 doesn't work:
+python3 -m pip install -r requirements.txt
+
+# OR on Windows:
+python -m pip install -r requirements.txt
 ```
 
 **1.3 Install Appium**
@@ -578,6 +585,25 @@ When you run all tests, the report shows results per module:
 ---
 
 ## Troubleshooting
+
+### Installation Issues
+
+**Problem: "command not found: pip" error**
+
+Solution:
+```bash
+# Try pip3 instead:
+pip3 install -r requirements.txt
+
+# If pip3 doesn't work, use Python module:
+python3 -m pip install -r requirements.txt
+
+# On Windows:
+python -m pip install -r requirements.txt
+
+# Still not working? Check if Python is installed:
+python3 --version  # Should show Python 3.8 or higher
+```
 
 ### Tests Not Running
 
