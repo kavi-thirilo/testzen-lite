@@ -32,6 +32,12 @@
   - [GitLab CI](#gitlab-ci)
 - [Test Organization](#test-organization)
 - [Troubleshooting](#troubleshooting)
+  - [No Python Installed](#no-python-installed)
+  - [No Node.js / npm Installed](#no-nodejs--npm-installed)
+  - [No Android SDK Setup](#no-android-sdk-setup)
+  - [No Appium Installed](#no-appium-installed)
+  - [No PATH Configuration](#no-path-configuration)
+  - [No Device or Emulator Available](#no-device-or-emulator-available)
   - [Installation Issues](#installation-issues)
   - [Android SDK Issues](#android-sdk-issues)
   - [Tests Not Running](#tests-not-running)
@@ -632,6 +638,615 @@ When you run all tests, the report shows results per module:
 ---
 
 ## Troubleshooting
+
+This section covers common setup issues from scratch. If you're starting fresh and don't have certain tools installed, start here.
+
+---
+
+### No Python Installed
+
+**How to check if you have Python:**
+```bash
+python3 --version
+```
+
+If you see "command not found" or version is below 3.8, you need to install Python.
+
+**Installation:**
+
+**macOS:**
+```bash
+# Option 1: Using Homebrew (recommended)
+brew install python3
+
+# Option 2: Download from python.org
+# Visit https://www.python.org/downloads/
+# Download Python 3.8 or higher for macOS
+# Run the installer
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install python3 python3-pip
+```
+
+**Linux (Fedora/RHEL):**
+```bash
+sudo dnf install python3 python3-pip
+```
+
+**Windows:**
+```
+1. Visit https://www.python.org/downloads/
+2. Download Python 3.8 or higher for Windows
+3. Run the installer
+4. IMPORTANT: Check "Add Python to PATH" during installation
+5. Click "Install Now"
+```
+
+**Verify Installation:**
+```bash
+python3 --version  # Should show Python 3.8 or higher
+pip3 --version     # Should show pip version
+```
+
+**If Python is installed but commands don't work:**
+```bash
+# Try without the "3":
+python --version
+pip --version
+
+# If those work, use "python" and "pip" instead of "python3" and "pip3"
+```
+
+---
+
+### No Node.js / npm Installed
+
+**How to check if you have Node.js and npm:**
+```bash
+node --version
+npm --version
+```
+
+If you see "command not found", you need to install Node.js (npm comes with it).
+
+**Installation:**
+
+**macOS:**
+```bash
+# Option 1: Using Homebrew (recommended)
+brew install node
+
+# Option 2: Download from nodejs.org
+# Visit https://nodejs.org/
+# Download LTS version (16.x or higher)
+# Run the installer
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+# Install Node.js 18.x (LTS)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verify it includes npm
+npm --version
+```
+
+**Linux (Fedora/RHEL):**
+```bash
+# Install Node.js 18.x (LTS)
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo dnf install -y nodejs
+```
+
+**Windows:**
+```
+1. Visit https://nodejs.org/
+2. Download LTS version (16.x or higher) for Windows
+3. Run the installer
+4. Accept all defaults
+5. Restart your terminal/command prompt
+```
+
+**Verify Installation:**
+```bash
+node --version   # Should show v16.x or higher
+npm --version    # Should show npm version
+```
+
+**Common Issue: npm permission errors**
+
+If you get permission errors when installing packages globally:
+```bash
+# Fix npm permissions (recommended method)
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+
+# Add to PATH
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc  # macOS
+# OR
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc  # Linux
+
+# Reload terminal
+source ~/.zshrc  # or source ~/.bashrc
+```
+
+---
+
+### No Android SDK Setup
+
+**How to check if you have Android SDK:**
+```bash
+adb version
+echo $ANDROID_HOME
+```
+
+If you see "command not found" for adb or ANDROID_HOME is empty, you need Android SDK.
+
+**Complete Android SDK Setup from Scratch:**
+
+**Option 1: Install Android Studio (Recommended - Easiest for Beginners)**
+
+**Step 1: Download and Install Android Studio**
+
+```
+macOS/Windows/Linux:
+1. Visit https://developer.android.com/studio
+2. Download Android Studio for your operating system
+3. Run the installer
+4. Follow the setup wizard (accept all defaults)
+5. Wait for initial downloads to complete (may take 10-30 minutes)
+```
+
+**Step 2: Install SDK Tools**
+
+```
+1. Open Android Studio
+2. Go to: Android Studio → Settings (macOS) or File → Settings (Windows/Linux)
+3. Navigate to: Appearance & Behavior → System Settings → Android SDK
+4. In "SDK Platforms" tab: Install at least one Android version (e.g., Android 11/API 30)
+5. In "SDK Tools" tab, check and install:
+   - Android SDK Build-Tools
+   - Android SDK Platform-Tools
+   - Android SDK Command-line Tools
+   - Android Emulator
+6. Click "Apply" and wait for installation
+```
+
+**Step 3: Create an Emulator (Virtual Device)**
+
+```
+1. In Android Studio, go to: Tools → Device Manager
+2. Click "Create Device"
+3. Choose a device definition (e.g., Pixel 4 or Pixel 5)
+4. Click "Next"
+5. Download a system image (e.g., Android 11/API 30 - R)
+6. Wait for download, then click "Next"
+7. Name your AVD (e.g., "Pixel_4_API_30")
+8. Click "Finish"
+```
+
+**Step 4: Set Environment Variables**
+
+**macOS/Linux:**
+```bash
+# Find your Android SDK location (usually one of these):
+# macOS: ~/Library/Android/sdk
+# Linux: ~/Android/Sdk
+
+# Add to your shell config file (~/.zshrc for macOS, ~/.bashrc for Linux)
+echo 'export ANDROID_HOME=$HOME/Library/Android/sdk' >> ~/.zshrc  # macOS
+# OR
+echo 'export ANDROID_HOME=$HOME/Android/Sdk' >> ~/.bashrc  # Linux
+
+# Add SDK tools to PATH
+echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.zshrc  # macOS
+echo 'export PATH=$PATH:$ANDROID_HOME/emulator' >> ~/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/tools/bin' >> ~/.zshrc
+
+# For Linux, replace ~/.zshrc with ~/.bashrc in all commands above
+
+# Reload your terminal
+source ~/.zshrc  # macOS
+# OR
+source ~/.bashrc  # Linux
+```
+
+**Windows:**
+```
+1. Open "System Properties" → "Environment Variables"
+2. Under "User variables", click "New"
+3. Variable name: ANDROID_HOME
+4. Variable value: C:\Users\YOUR_USERNAME\AppData\Local\Android\Sdk
+   (Replace YOUR_USERNAME with your actual Windows username)
+5. Click "OK"
+
+6. Edit the "Path" variable:
+   - Select "Path" and click "Edit"
+   - Click "New" and add: %ANDROID_HOME%\platform-tools
+   - Click "New" and add: %ANDROID_HOME%\emulator
+   - Click "New" and add: %ANDROID_HOME%\tools\bin
+   - Click "OK"
+
+7. Close and reopen your terminal/command prompt
+```
+
+**Step 5: Verify Installation**
+
+```bash
+# Check Android SDK
+echo $ANDROID_HOME  # Should show path to Android SDK (macOS/Linux)
+# Windows: echo %ANDROID_HOME%
+
+# Check adb
+adb version  # Should show Android Debug Bridge version
+
+# Check emulator
+emulator -list-avds  # Should list your created emulator(s)
+
+# List connected devices/emulators
+adb devices  # Should show "List of devices attached"
+```
+
+**Option 2: Install Android Command Line Tools Only (Advanced Users)**
+
+This is lighter weight but requires more manual setup.
+
+```bash
+# Step 1: Download command line tools
+# Visit: https://developer.android.com/studio#command-tools
+# Download "Command line tools only" for your OS
+
+# Step 2: Extract to a location
+mkdir -p ~/android-sdk
+cd ~/android-sdk
+# Extract downloaded zip here
+
+# Step 3: Set ANDROID_HOME
+export ANDROID_HOME=~/android-sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+# Make permanent (add to ~/.zshrc or ~/.bashrc)
+echo 'export ANDROID_HOME=~/android-sdk' >> ~/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin' >> ~/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.zshrc
+
+# Step 4: Install required components
+sdkmanager "platform-tools" "platforms;android-30" "emulator"
+sdkmanager "build-tools;30.0.3"
+sdkmanager "system-images;android-30;google_apis;x86_64"
+
+# Step 5: Create emulator
+avdmanager create avd -n Pixel_4_API_30 -k "system-images;android-30;google_apis;x86_64" -d pixel_4
+
+# Step 6: Verify
+adb version
+emulator -list-avds
+```
+
+**For complete Android SDK troubleshooting, see:** [ANDROID_SDK_SETUP.md](ANDROID_SDK_SETUP.md)
+
+---
+
+### No Appium Installed
+
+**How to check if you have Appium:**
+```bash
+appium --version
+```
+
+If you see "command not found", you need to install Appium.
+
+**Prerequisites:** Node.js and npm must be installed (see "No Node.js / npm Installed" section above)
+
+**Installation:**
+
+**Step 1: Install Appium**
+
+```bash
+# Install Appium globally
+npm install -g appium
+
+# If you get permission errors, see "No Node.js / npm Installed" section
+# for npm permission fix
+```
+
+**Step 2: Install Required Drivers**
+
+```bash
+# For Android testing
+appium driver install uiautomator2
+
+# For iOS testing (macOS only)
+appium driver install xcuitest
+
+# Verify drivers are installed
+appium driver list --installed
+
+# You should see:
+# - uiautomator2@... (for Android)
+# - xcuitest@... (for iOS, if on macOS)
+```
+
+**Step 3: Verify Installation**
+
+```bash
+# Check Appium version
+appium --version  # Should show version 2.x or 3.x
+
+# Check where Appium is installed
+which appium  # Should show path to appium
+
+# Try starting Appium manually (Ctrl+C to stop)
+appium --allow-insecure=*:chromedriver_autodownload
+
+# You should see:
+# [Appium] Welcome to Appium v...
+# [Appium] Appium REST http interface listener started on 0.0.0.0:4723
+```
+
+**Common Issues:**
+
+**Problem: "appium: command not found" after installation**
+
+This means npm global bin folder is not in your PATH.
+
+Solution:
+```bash
+# Find where npm installs global packages
+npm config get prefix
+
+# Should show something like:
+# /usr/local (default)
+# OR ~/.npm-global (if you changed it)
+
+# Add npm global bin to PATH
+# If prefix is /usr/local:
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.zshrc  # macOS
+# OR
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc  # Linux
+
+# If prefix is ~/.npm-global:
+echo 'export PATH=$PATH:~/.npm-global/bin' >> ~/.zshrc  # macOS
+# OR
+echo 'export PATH=$PATH:~/.npm-global/bin' >> ~/.bashrc  # Linux
+
+# Reload terminal
+source ~/.zshrc  # or source ~/.bashrc
+
+# Try again
+appium --version
+```
+
+**Problem: npm permission errors (EACCES)**
+
+See the npm permission fix in "No Node.js / npm Installed" section above.
+
+**Problem: "Could not find a driver for automationName" error**
+
+This means you forgot to install the Appium driver.
+
+Solution:
+```bash
+# Install the driver
+appium driver install uiautomator2
+
+# Verify
+appium driver list --installed
+```
+
+---
+
+### No PATH Configuration
+
+**What is PATH?**
+PATH is an environment variable that tells your system where to find commands. If tools are installed but commands don't work, PATH might not be configured.
+
+**How to check your PATH:**
+```bash
+echo $PATH  # macOS/Linux
+# OR
+echo %PATH%  # Windows
+```
+
+You should see multiple directories separated by colons (macOS/Linux) or semicolons (Windows).
+
+**Common Missing Paths and How to Fix:**
+
+**Python not in PATH:**
+
+```bash
+# Find where Python is installed
+which python3  # macOS/Linux
+# OR
+where python  # Windows
+
+# If found but PATH still has issues, add Python to PATH:
+
+# macOS/Linux:
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc
+
+# Windows: Reinstall Python and check "Add Python to PATH" option
+```
+
+**Android SDK not in PATH:**
+
+```bash
+# Add Android SDK to PATH
+
+# macOS:
+echo 'export ANDROID_HOME=$HOME/Library/Android/sdk' >> ~/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/emulator' >> ~/.zshrc
+source ~/.zshrc
+
+# Linux:
+echo 'export ANDROID_HOME=$HOME/Android/Sdk' >> ~/.bashrc
+echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.bashrc
+echo 'export PATH=$PATH:$ANDROID_HOME/emulator' >> ~/.bashrc
+source ~/.bashrc
+
+# Windows:
+# See "No Android SDK Setup" section for Windows PATH configuration
+```
+
+**npm/Appium not in PATH:**
+
+```bash
+# Find npm global prefix
+npm config get prefix
+
+# Add to PATH
+
+# macOS:
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.zshrc
+# OR if using custom prefix:
+echo 'export PATH=$PATH:~/.npm-global/bin' >> ~/.zshrc
+source ~/.zshrc
+
+# Linux:
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
+# OR if using custom prefix:
+echo 'export PATH=$PATH:~/.npm-global/bin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Important Notes:**
+
+- Changes to PATH require closing and reopening your terminal
+- Use `~/.zshrc` for macOS (if using zsh shell)
+- Use `~/.bashrc` for Linux (if using bash shell)
+- Use `~/.bash_profile` if neither zshrc nor bashrc exists
+- Windows requires editing through System Properties → Environment Variables
+
+**Verify PATH is working:**
+```bash
+# After adding to PATH, verify each command works:
+python3 --version
+node --version
+npm --version
+adb version
+appium --version
+emulator -list-avds
+```
+
+---
+
+### No Device or Emulator Available
+
+**How to check available devices:**
+```bash
+adb devices
+```
+
+You should see at least one device listed (either physical device or emulator).
+
+**Scenario 1: No Emulator Created**
+
+If you have Android Studio but no emulator:
+
+```bash
+# Check if any emulators exist
+emulator -list-avds
+
+# If list is empty, create one:
+# Option 1: Using Android Studio (easiest)
+# 1. Open Android Studio
+# 2. Tools → Device Manager
+# 3. Create Device
+# 4. Choose device model (e.g., Pixel 4)
+# 5. Choose system image (e.g., Android 11)
+# 6. Finish
+
+# Option 2: Using command line
+# First, download a system image:
+sdkmanager "system-images;android-30;google_apis;x86_64"
+
+# Create AVD:
+avdmanager create avd -n Pixel_4_API_30 \
+  -k "system-images;android-30;google_apis;x86_64" \
+  -d pixel_4
+
+# Verify
+emulator -list-avds  # Should show "Pixel_4_API_30"
+```
+
+**Scenario 2: Emulator Exists but Not Running**
+
+```bash
+# Let TestZen start it automatically:
+./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx
+
+# OR start manually:
+./testzen emulator launch
+
+# OR start manually with specific emulator:
+./testzen emulator launch --avd Pixel_4_API_30
+
+# Wait 30-60 seconds for emulator to boot
+
+# Verify it's running
+adb devices  # Should show "emulator-5554"
+```
+
+**Scenario 3: Physical Device Not Detected**
+
+**For Android Physical Device:**
+
+```bash
+# Step 1: Enable USB debugging on phone
+# 1. Open Settings → About Phone
+# 2. Tap "Build Number" 7 times (enables Developer Options)
+# 3. Go back to Settings → System → Developer Options
+# 4. Enable "USB Debugging"
+# 5. Connect phone to computer via USB
+
+# Step 2: Check connection
+adb devices
+
+# If you see "unauthorized":
+# - Look at your phone screen
+# - You should see a popup asking to allow USB debugging
+# - Tap "Allow"
+
+# If you see "offline":
+adb kill-server
+adb start-server
+adb devices
+```
+
+**For iOS Physical Device:**
+
+iOS testing requires macOS with Xcode and additional setup. See iOS-specific documentation.
+
+**Scenario 4: Device Shows as Offline or Unauthorized**
+
+```bash
+# Emulator shows offline/unauthorized
+# This means USB debugging is disabled
+
+# Automatic fix:
+./scripts/enable_usb_debugging.sh
+
+# Manual fix:
+# 1. Look at the emulator screen
+# 2. Go to Settings → About emulated device
+# 3. Tap "Build number" 7 times
+# 4. Go back → System → Developer options
+# 5. Enable "USB debugging"
+
+# Restart adb
+adb kill-server
+adb start-server
+adb devices  # Should now show "device"
+```
+
+---
 
 ### Installation Issues
 
