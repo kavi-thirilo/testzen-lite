@@ -256,8 +256,8 @@ class DeviceManager:
                 self.color_logger.error("Driver not initialized. Cannot install APK.")
                 return False
 
-            # Use Appium API with test-only flag support
-            self.driver.install_app(apk_path, androidInstallOptions=['-r', '-t'])
+            # Use Appium API with test package support
+            self.driver.install_app(apk_path, replace=True, allowTestPackages=True, grantPermissions=True)
             print(f"[TZ] Successfully installed APK from {apk_path}")
             return True
         except Exception as e:
@@ -318,10 +318,10 @@ class DeviceManager:
                     apk_path = apk_files[0]
                     self.color_logger.info(f"Found APK: {os.path.basename(apk_path)}")
 
-                    # Install using Appium API with test-only flag
+                    # Install using Appium API with test package support
                     try:
-                        # Pass androidInstallOptions to support test-only APKs
-                        self.driver.install_app(apk_path, androidInstallOptions=['-r', '-t'])
+                        # Use allowTestPackages parameter for test-only APKs
+                        self.driver.install_app(apk_path, replace=True, allowTestPackages=True, grantPermissions=True)
                         self.color_logger.success(f"Successfully installed {os.path.basename(apk_path)}")
                     except Exception as e:
                         self.color_logger.error(f"Failed to install APK: {e}")
