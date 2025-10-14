@@ -224,4 +224,4 @@ After upgrading, verify your setup:
 
 ---
 
-Released: 2025-01-14
+Released: 2025-10-14
