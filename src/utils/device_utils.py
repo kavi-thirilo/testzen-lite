@@ -244,49 +244,45 @@ class DeviceManager:
             self.color_logger.info("Keeping Appium server running (--keep-appium enabled)")
 
     def install_apk(self, apk_path):
-        """Install APK on device"""
-        try:
-            self.driver.install_app(apk_path)
-            print(f"[TZ] Installed APK: {apk_path}")
-            return True
-        except Exception as e:
-            print(f"[TZ] Failed to install APK: {e}")
-            return False
-
-    def uninstall_apk(self, package_name):
-        """Uninstall APK from device"""
-        try:
-            result = subprocess.run(['adb', 'uninstall', package_name], 
-                                  capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f"[TZ] Successfully uninstalled {package_name}")
-                return True
-            else:
-                print(f"[TZ] Uninstall result: {result.stdout.strip()}")
-                return True  # Consider partial success
-        except Exception as e:
-            print(f"[TZ] Uninstall error: {e}")
-            return False
-
-    def install_apk(self, apk_path):
-        """Install APK to device"""
+        """Install APK to device using Appium API"""
         try:
             import os
             if not os.path.exists(apk_path):
                 print(f"[TZ] APK file not found: {apk_path}")
                 print(f"[TZ] Skipping installation in test environment")
                 return True  # Return success for testing when APK missing
-                
-            result = subprocess.run(['adb', 'install', '-r', '-t', apk_path], 
-                                  capture_output=True, text=True)
-            if result.returncode == 0:
-                print(f"[TZ] Successfully installed APK from {apk_path}")
-                return True
-            else:
-                print(f"[TZ] Install failed: {result.stderr}")
+
+            if not self.driver:
+                self.color_logger.error("Driver not initialized. Cannot install APK.")
                 return False
+
+            # Use Appium API with test-only flag support
+            self.driver.install_app(apk_path, androidInstallOptions=['-r', '-t'])
+            print(f"[TZ] Successfully installed APK from {apk_path}")
+            return True
         except Exception as e:
             print(f"[TZ] Install error: {e}")
+            return False
+
+    def uninstall_apk(self, package_name):
+        """Uninstall APK from device using Appium API"""
+        try:
+            if self.driver:
+                self.driver.remove_app(package_name)
+                print(f"[TZ] Successfully uninstalled {package_name}")
+                return True
+            else:
+                # Fallback to ADB if driver not available
+                result = subprocess.run(['adb', 'uninstall', package_name],
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(f"[TZ] Successfully uninstalled {package_name}")
+                    return True
+                else:
+                    print(f"[TZ] Uninstall result: {result.stdout.strip()}")
+                    return True  # Consider partial success
+        except Exception as e:
+            print(f"[TZ] Uninstall error: {e}")
             return False
 
     def launch_app(self, package_name):
@@ -322,9 +318,10 @@ class DeviceManager:
                     apk_path = apk_files[0]
                     self.color_logger.info(f"Found APK: {os.path.basename(apk_path)}")
 
-                    # Install using Appium API
+                    # Install using Appium API with test-only flag
                     try:
-                        self.driver.install_app(apk_path)
+                        # Pass androidInstallOptions to support test-only APKs
+                        self.driver.install_app(apk_path, androidInstallOptions=['-r', '-t'])
                         self.color_logger.success(f"Successfully installed {os.path.basename(apk_path)}")
                     except Exception as e:
                         self.color_logger.error(f"Failed to install APK: {e}")
