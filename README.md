@@ -729,6 +729,11 @@ Solution:
 # Install the driver
 appium driver install uiautomator2
 
+# If you get "EACCES: permission denied" or npm cache error:
+npm cache clean --force
+sudo chown -R $(whoami) ~/.npm
+appium driver install uiautomator2
+
 # Verify it's installed
 appium driver list --installed
 
@@ -738,6 +743,8 @@ appium driver list --installed
 # Now run your test again
 ./testzen run --file your_test.xlsx
 ```
+
+**If driver installation keeps failing**, see [ANDROID_SDK_SETUP.md](ANDROID_SDK_SETUP.md) for complete npm permission fix.
 
 **Problem: "Failed to start Appium server" error**
 

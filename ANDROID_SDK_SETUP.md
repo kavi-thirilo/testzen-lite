@@ -180,17 +180,38 @@ appium driver install uiautomator2
 ✔ Driver 'uiautomator2' successfully installed
 ```
 
-**If you get permission errors:**
+**If you get "EACCES: permission denied" or npm cache errors:**
+
 ```bash
-# Option 1: Fix npm permissions (recommended)
+# Solution 1: Clear npm cache and fix ownership (quick fix)
+npm cache clean --force
+sudo chown -R $(whoami) ~/.npm
+appium driver install uiautomator2
+
+# If that doesn't work, use Solution 2:
+
+# Solution 2: Fix npm permissions permanently (recommended)
 mkdir ~/.npm-global
 npm config set prefix '~/.npm-global'
 echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
 source ~/.zshrc
 
-# Then try again:
+# Fix ownership of npm folders
+sudo chown -R $(whoami) ~/.npm
+sudo chown -R $(whoami) /usr/local/lib/node_modules
+
+# Clear cache
+npm cache clean --force
+
+# Reinstall Appium to the new location
 npm install -g appium
+
+# Now install the driver
 appium driver install uiautomator2
+
+# Solution 3: Use sudo (quick but not recommended)
+sudo npm cache clean --force
+sudo appium driver install uiautomator2
 ```
 
 ### Step 4: Verify Driver Installation
