@@ -25,7 +25,7 @@ class TestZenCLI:
     def __init__(self):
         self.framework_dir = Path(__file__).parent
         self.tests_dir = self.framework_dir / "tests"
-        self.version_config_path = self.framework_dir / "dev/build/version_config.json"
+        self.version_config_path = self.framework_dir / "config/version.json"
     
     def list_tests(self, platform=None):
         """List all available test files"""
@@ -136,10 +136,10 @@ class TestZenCLI:
             try:
                 with open(self.version_config_path, 'r') as f:
                     config = json.load(f)
-                    return config.get("current_version", "2.0.0")
+                    return config.get("current_version", "1.1.0")
             except:
-                return "2.0.0"
-        return "2.0.0"
+                return "1.1.0"
+        return "1.1.0"
 
 def main():
     parser = argparse.ArgumentParser(
@@ -326,8 +326,10 @@ Examples:
             print("=" * 50)
             print(f"Installation: {cli.framework_dir}")
             if cli.version_config_path.exists():
-                print("Version catalog: docs/VERSION_CATALOG.md")
-                print("Changelog: dev/docs/CHANGELOG.md")
+                config_data = json.load(open(cli.version_config_path))
+                release_notes = config_data.get("release_notes", "")
+                if release_notes:
+                    print(f"Release notes: {release_notes}")
             
     except KeyboardInterrupt:
         print("\n\nWARNING: TestZen execution interrupted by user")
