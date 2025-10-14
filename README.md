@@ -80,6 +80,8 @@ TestZen Lite is a no-code mobile test automation framework that allows you to cr
 
 **Android Setup (Required for Android Testing):**
 
+**IMPORTANT**: If you encounter "adb not found" or "Appium driver missing" errors, see the detailed [ANDROID_SDK_SETUP.md](ANDROID_SDK_SETUP.md) guide with step-by-step instructions.
+
 If you don't have Android development tools set up, you'll need:
 
 **Option 1: Install Android Studio (Easiest - Recommended for beginners)**
@@ -688,7 +690,9 @@ Error message: `[Errno 2] No such file or directory: 'adb'`
 
 **This means**: Android SDK is not installed or not in your PATH.
 
-Solution:
+**See detailed setup guide**: [ANDROID_SDK_SETUP.md](ANDROID_SDK_SETUP.md) for comprehensive step-by-step instructions.
+
+Quick Solution:
 
 ```bash
 # Step 1: Check if ANDROID_HOME is set
