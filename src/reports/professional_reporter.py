@@ -92,9 +92,9 @@ class ProfessionalReporter:
         self.test_steps.append(step)
 
         # Update metrics
-        if status.upper() == 'PASS':
+        if status.upper() == 'PASSED':
             self.passed_steps += 1
-        elif status.upper() == 'FAIL':
+        elif status.upper() == 'FAILED':
             self.failed_steps += 1
         elif status.upper() == 'SKIP':
             self.skipped_steps += 1
