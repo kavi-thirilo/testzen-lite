@@ -964,7 +964,7 @@ class TestZenAutomation:
                     action = str(step_data.get('Action', '')).strip()
                     locator_type = str(step_data.get('Locator Type', '')).strip()
                     locator_value = str(step_data.get('Locator Value', '')).strip()
-                    
+
                     # Add unexecuted step to report
                     locator_str = f"{locator_type}: {locator_value}" if locator_type and locator_value else None
                     self.professional_reporter.add_test_step(
@@ -977,8 +977,9 @@ class TestZenAutomation:
                         locator=locator_str,
                         duration=0
                     )
-            
-            return True
+
+            # Return True only if no steps failed
+            return self.failed_steps == 0
             
         except KeyboardInterrupt:
             print(f"\n[TZ] TEST INTERRUPTED BY USER")
