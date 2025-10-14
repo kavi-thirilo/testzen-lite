@@ -291,7 +291,7 @@ class DeviceManager:
 
     def launch_app(self, package_name):
         """
-        Launch app on device using proper activity manager
+        Launch app on device using Appium driver APIs
 
         Args:
             package_name: Package name of the app to launch
@@ -303,11 +303,14 @@ class DeviceManager:
             import os
             import glob
 
-            # Check if app is installed
-            check_result = subprocess.run(['adb', 'shell', 'pm', 'list', 'packages', package_name],
-                                         capture_output=True, text=True, timeout=10)
+            if not self.driver:
+                self.color_logger.error("Driver not initialized. Cannot launch app.")
+                return False
 
-            if package_name not in check_result.stdout:
+            # Check if app is installed using Appium API
+            is_installed = self.driver.is_app_installed(package_name)
+
+            if not is_installed:
                 self.color_logger.warning(f"App {package_name} not installed. Attempting to install...")
 
                 # Find APK in apps/android folder
@@ -319,127 +322,91 @@ class DeviceManager:
                     apk_path = apk_files[0]
                     self.color_logger.info(f"Found APK: {os.path.basename(apk_path)}")
 
-                    # Install the APK
-                    install_result = subprocess.run(['adb', 'install', '-r', '-t', apk_path],
-                                                   capture_output=True, text=True, timeout=60)
-
-                    if install_result.returncode == 0:
+                    # Install using Appium API
+                    try:
+                        self.driver.install_app(apk_path)
                         self.color_logger.success(f"Successfully installed {os.path.basename(apk_path)}")
-                    else:
-                        self.color_logger.error(f"Failed to install APK: {install_result.stderr}")
+                    except Exception as e:
+                        self.color_logger.error(f"Failed to install APK: {e}")
                         return False
                 else:
                     self.color_logger.error(f"No APK found in apps/android/ directory")
                     return False
 
-            # First, force stop any existing instance
-            subprocess.run(['adb', 'shell', 'am', 'force-stop', package_name],
-                          capture_output=True, text=True, timeout=10)
-            time.sleep(1)
+            # Terminate app if already running using Appium API
+            try:
+                app_state = self.driver.query_app_state(package_name)
+                if app_state in [3, 4]:  # 3=background, 4=foreground
+                    self.driver.terminate_app(package_name)
+                    time.sleep(0.5)
+            except:
+                pass
 
-            # Kill any LeakCanary processes before launching
-            subprocess.run(['adb', 'shell', 'am', 'force-stop', 'com.squareup.leakcanary'],
-                          capture_output=True, text=True, timeout=5)
-            subprocess.run(['adb', 'shell', 'am', 'force-stop', 'leakcanary'],
-                          capture_output=True, text=True, timeout=5)
+            # Launch app using Appium API
+            self.color_logger.info(f"Launching app: {package_name}")
+            self.driver.activate_app(package_name)
 
-            # Get the launcher activity for this package
-            launcher_activity = self._get_launcher_activity(package_name)
-
-            if launcher_activity:
-                # Launch using activity manager with explicit activity
-                result = subprocess.run(['adb', 'shell', 'am', 'start', '-n',
-                                       f"{package_name}/{launcher_activity}",
-                                       '-a', 'android.intent.action.MAIN',
-                                       '-c', 'android.intent.category.LAUNCHER'],
-                                      capture_output=True, text=True, timeout=15)
-
-                if result.returncode == 0 or 'Starting:' in result.stdout:
-                    print(f"[TZ] Successfully launched {package_name}")
-                    time.sleep(5)  # Wait for app to initialize
-                    return True
-                else:
-                    print(f"[TZ] Launch failed: {result.stderr}")
-                    # Try monkey command as fallback
-                    return self._launch_with_monkey(package_name)
-            else:
-                # No specific activity found, try monkey command
-                self.color_logger.warning("Could not find launcher activity, trying monkey command...")
-                return self._launch_with_monkey(package_name)
-
-        except Exception as e:
-            print(f"[TZ] Launch error: {e}")
-            return False
-
-    def _get_launcher_activity(self, package_name):
-        """
-        Get the main launcher activity for a package
-
-        Args:
-            package_name: Package name to query
-
-        Returns:
-            Activity name (without package prefix) or None if not found
-        """
-        try:
-            result = subprocess.run(['adb', 'shell', 'dumpsys', 'package', package_name],
-                                   capture_output=True, text=True, timeout=10)
-
-            if result.returncode == 0:
-                # Look for the MAIN/LAUNCHER intent filter
-                lines = result.stdout.split('\n')
-                for i, line in enumerate(lines):
-                    if 'android.intent.action.MAIN' in line:
-                        # Search backwards for the Activity line
-                        for j in range(i-1, max(0, i-20), -1):
-                            if 'Activity' in lines[j] and package_name in lines[j]:
-                                # Extract activity name
-                                parts = lines[j].split()
-                                for part in parts:
-                                    if package_name in part and '/' in part:
-                                        activity = part.split()[-1]
-                                        # Remove package prefix if present
-                                        if '/' in activity:
-                                            activity = activity.split('/')[-1]
-                                        return activity
-                return None
-        except Exception as e:
-            self.color_logger.debug(f"Error getting launcher activity: {e}")
-            return None
-
-    def _launch_with_monkey(self, package_name):
-        """
-        Fallback method to launch app using monkey command
-
-        Args:
-            package_name: Package name to launch
-
-        Returns:
-            True if launch succeeded, False otherwise
-        """
-        try:
-            result = subprocess.run(['adb', 'shell', 'monkey', '-p', package_name,
-                                   '-c', 'android.intent.category.LAUNCHER', '1'],
-                                  capture_output=True, text=True, timeout=15)
-
-            if result.returncode == 0 and 'Events injected' in result.stdout:
-                print(f"[TZ] Successfully launched {package_name} using monkey")
-                time.sleep(5)
+            # Wait for app to be in foreground using Appium API
+            if self._wait_for_app_ready(package_name, timeout=10):
+                self.color_logger.success(f"App {package_name} is ready")
                 return True
             else:
-                print(f"[TZ] Monkey launch failed: {result.stdout}")
-                return False
+                self.color_logger.warning(f"App launched but foreground state not confirmed")
+                return True  # Proceed anyway
+
         except Exception as e:
-            print(f"[TZ] Monkey launch error: {e}")
+            self.color_logger.error(f"Launch error: {e}")
             return False
 
+    def _wait_for_app_ready(self, package_name, timeout=10):
+        """
+        Wait for app to be in foreground using Appium query_app_state API
+
+        Args:
+            package_name: Package name to check
+            timeout: Maximum time to wait in seconds
+
+        Returns:
+            True if app is in foreground, False if timeout
+        """
+        start_time = time.time()
+        self.color_logger.info(f"Verifying app foreground state (timeout: {timeout}s)...")
+
+        while time.time() - start_time < timeout:
+            try:
+                # Query app state using Appium API
+                # 0=not installed, 1=not running, 3=background, 4=foreground
+                app_state = self.driver.query_app_state(package_name)
+
+                if app_state == 4:  # App is in foreground
+                    elapsed = int(time.time() - start_time)
+                    self.color_logger.success(f"App in foreground (verified in {elapsed}s)")
+                    return True
+                elif app_state == 3:  # App in background, try to activate
+                    self.color_logger.debug(f"App in background, activating...")
+                    self.driver.activate_app(package_name)
+
+            except Exception as e:
+                self.color_logger.debug(f"App state check error: {e}")
+
+            time.sleep(0.5)  # Check every 500ms
+
+        self.color_logger.warning(f"App foreground check timed out after {timeout}s")
+        return False
+
     def force_stop_app(self, package_name):
-        """Force stop app using ADB"""
+        """Force stop app using Appium API"""
         try:
-            result = subprocess.run(['adb', 'shell', 'am', 'force-stop', package_name],
-                                  capture_output=True, text=True)
-            print(f"[TZ] Force stopped app: {package_name}")
-            return True
+            if self.driver:
+                self.driver.terminate_app(package_name)
+                print(f"[TZ] Force stopped app: {package_name}")
+                return True
+            else:
+                # Fallback to ADB if driver not available
+                result = subprocess.run(['adb', 'shell', 'am', 'force-stop', package_name],
+                                      capture_output=True, text=True)
+                print(f"[TZ] Force stopped app: {package_name}")
+                return True
         except Exception as e:
             print(f"[TZ] Force stop error: {e}")
             return False

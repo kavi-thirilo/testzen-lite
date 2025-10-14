@@ -36,7 +36,9 @@ ELEMENT_WAIT_CONFIG = {
 # App Launch Configuration
 APP_LAUNCH_CONFIG = {
     # Wait after launching app for initialization (seconds)
-    'post_launch_wait': 8,
+    # Note: Device manager uses Appium query_app_state API to verify app is
+    # in foreground (max 10s), so this is minimal additional stabilization
+    'post_launch_wait': 2,
 
     # Additional wait for hybrid/WebView apps (seconds)
     'webview_app_additional_wait': 5,
