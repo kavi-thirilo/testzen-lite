@@ -119,33 +119,70 @@ class DeviceManager:
 
         self.color_logger.info(f"[TZ] Verifying device is ready for automation (timeout: {timeout}s)...")
 
+        # First, ensure adb server is running and restart it to clear any stale connections
+        try:
+            self.color_logger.debug("[TZ] Restarting adb server to ensure clean connection...")
+            subprocess.run(['adb', 'kill-server'], capture_output=True, timeout=5)
+            time.sleep(1)
+            subprocess.run(['adb', 'start-server'], capture_output=True, timeout=10)
+            time.sleep(2)
+        except Exception as e:
+            self.color_logger.warning(f"[TZ] Failed to restart adb server: {e}")
+
+        # Wait for device to appear in adb devices list
+        self.color_logger.info(f"[TZ] Waiting for device {device_id} to be recognized by adb...")
+        wait_attempts = 0
+        max_wait_attempts = 10
+
+        while wait_attempts < max_wait_attempts:
+            try:
+                result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, timeout=5)
+                if device_id in result.stdout and 'device' in result.stdout:
+                    self.color_logger.success(f"[TZ] Device {device_id} detected by adb")
+                    break
+            except Exception as e:
+                self.color_logger.debug(f"[TZ] ADB devices check error: {e}")
+
+            wait_attempts += 1
+            if wait_attempts >= max_wait_attempts:
+                self.color_logger.warning(f"[TZ] Device not detected by adb, but continuing...")
+            time.sleep(2)
+
+        # Now check if device responds to commands
+        check_count = 0
         while time.time() - start_time < timeout:
             elapsed = int(time.time() - start_time)
             remaining = timeout - elapsed
+            check_count += 1
 
             try:
+                self.color_logger.debug(f"[TZ] Check #{check_count}: Testing device responsiveness...")
+
                 # Check if device responds to basic commands
                 result = subprocess.run(['adb', '-s', device_id, 'shell', 'pm', 'list', 'packages', '-e'],
                                       capture_output=True, text=True, timeout=5)
 
                 if result.returncode == 0 and 'package:' in result.stdout:
                     # Device is responsive
-                    self.color_logger.success(f"[TZ] Device is ready for automation (verified in {elapsed}s)")
+                    self.color_logger.success(f"[TZ] Device is ready for automation (verified in {elapsed}s after {check_count} checks)")
                     return True
+                else:
+                    self.color_logger.debug(f"[TZ] Device returned code {result.returncode}, output length: {len(result.stdout)}")
 
             except subprocess.TimeoutExpired:
-                self.color_logger.debug(f"[TZ] Device still initializing ({elapsed}/{timeout}s)")
+                self.color_logger.warning(f"[TZ] Device command timed out (check #{check_count}) - device may still be booting ({elapsed}/{timeout}s)")
             except Exception as e:
-                self.color_logger.debug(f"[TZ] Device check error: {e}")
+                self.color_logger.warning(f"[TZ] Device check #{check_count} error: {e}")
 
-            # Progress logging every 10 seconds
-            if elapsed % 10 == 0 and elapsed > 0:
-                self.color_logger.info(f"[TZ] Still verifying device readiness... ({elapsed}/{timeout}s)")
+            # Progress logging every 5 seconds with more detail
+            if elapsed % 5 == 0 and elapsed > 0:
+                self.color_logger.info(f"[TZ] Still verifying device readiness... ({elapsed}/{timeout}s, {check_count} checks performed)")
 
             time.sleep(2)
 
         # Timeout reached
-        self.color_logger.warning(f"[TZ] Device readiness check timed out after {timeout}s, proceeding anyway...")
+        self.color_logger.warning(f"[TZ] Device readiness check timed out after {timeout}s and {check_count} checks")
+        self.color_logger.warning(f"[TZ] Proceeding anyway - Appium will handle further initialization")
         return False
 
     def connect(self):

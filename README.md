@@ -826,6 +826,50 @@ adb devices  # Should show at least one device
 # - OR connect a physical Android device with USB debugging enabled
 ```
 
+**Problem: Hangs at "Checking device availability" even though emulator is running**
+
+Error: TestZen hangs or shows no progress after emulator launches and appears available.
+
+**Why this happens:**
+- ADB server has stale connection to device
+- Device is in "offline" or "unauthorized" state
+- Device is booted but system services not fully ready
+
+Solution:
+
+```bash
+# Option 1: Restart ADB server manually
+adb kill-server
+adb start-server
+adb devices  # Check if device shows as "device" (not "offline" or "unauthorized")
+
+# Option 2: If device shows as "unauthorized"
+# - Look at emulator screen
+# - Accept "Allow USB debugging" prompt
+# - If no prompt, run: adb kill-server && adb start-server
+
+# Option 3: If device shows as "offline"
+# - Close the emulator completely
+# - Wait 10 seconds
+# - Start emulator again: ./testzen emulator launch
+
+# Option 4: If issue persists, run test with enhanced logging
+# The updated TestZen now automatically restarts adb and shows detailed progress
+./testzen run --file your_test.xlsx
+
+# You should now see:
+# [TZ] Restarting adb server to ensure clean connection...
+# [TZ] Waiting for device emulator-5554 to be recognized by adb...
+# [TZ] Device emulator-5554 detected by adb
+# [TZ] Check #1: Testing device responsiveness...
+```
+
+**TestZen v1.1.1+ includes automatic fixes:**
+- Automatically restarts adb server before checking device
+- Shows check count and progress every 5 seconds
+- Waits for device to appear in `adb devices` list
+- More detailed logging to identify where hang occurs
+
 **Problem: "Appium server not running" error**
 
 Solution:
