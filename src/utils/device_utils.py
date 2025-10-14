@@ -227,7 +227,17 @@ class DeviceManager:
             try:
                 result = subprocess.run(['appium', 'driver', 'list', '--installed'],
                                       capture_output=True, text=True, timeout=10)
-                if 'uiautomator2' not in result.stdout:
+
+                # Check both stdout and stderr, and handle ANSI color codes
+                output = result.stdout + result.stderr
+
+                # Remove ANSI color codes for clean checking
+                import re
+                clean_output = re.sub(r'\x1b\[[0-9;]*m', '', output)
+
+                self.color_logger.debug(f"[TZ] Appium driver list output: {clean_output[:200]}")
+
+                if 'uiautomator2' not in clean_output:
                     self.color_logger.error("[TZ] ERROR: Appium uiautomator2 driver not installed!")
                     self.color_logger.error("[TZ] ")
                     self.color_logger.error("[TZ] Quick Fix:")
