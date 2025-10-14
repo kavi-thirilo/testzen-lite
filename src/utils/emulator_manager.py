@@ -105,14 +105,14 @@ class EmulatorManager:
         return False
 
     def launch_emulator(self, avd_name: str = None, wait_for_boot: bool = True,
-                       timeout: int = 120) -> bool:
+                       timeout: int = 180) -> bool:
         """
         Launch an Android emulator
 
         Args:
             avd_name: Name of AVD to launch. If None, launches first available
             wait_for_boot: Wait for emulator to fully boot
-            timeout: Maximum time to wait for boot (seconds)
+            timeout: Maximum time to wait for boot (seconds, default: 180s)
 
         Returns:
             True if emulator launched successfully
@@ -161,12 +161,12 @@ class EmulatorManager:
             self.logger.error(f"[TZ] Failed to launch emulator: {e}")
             return False
 
-    def _wait_for_emulator_boot(self, timeout: int = 120) -> bool:
+    def _wait_for_emulator_boot(self, timeout: int = 180) -> bool:
         """
         Wait for emulator to fully boot
 
         Args:
-            timeout: Maximum time to wait in seconds (default: 120s)
+            timeout: Maximum time to wait in seconds (default: 180s)
 
         Returns:
             True if emulator boots successfully, False if timeout occurs
@@ -206,7 +206,7 @@ class EmulatorManager:
         self.logger.error(f"[TZ] Emulator failed to appear after {timeout}s timeout")
         return False
 
-    def _wait_for_boot_complete(self, device_id: str, timeout: int = 60) -> bool:
+    def _wait_for_boot_complete(self, device_id: str, timeout: int = 90) -> bool:
         """
         Wait for device boot to complete and system to be fully ready for automation
 
@@ -214,11 +214,11 @@ class EmulatorManager:
         1. Basic boot completion (sys.boot_completed)
         2. Boot animation stopped (init.svc.bootanim)
         3. Package manager ready and responsive
-        4. System services fully initialized
+        4. Device properties accessible
 
         Args:
             device_id: Device ID to monitor
-            timeout: Maximum time to wait in seconds (default: 60s)
+            timeout: Maximum time to wait in seconds (default: 90s)
 
         Returns:
             True if device is fully ready, False if timeout occurs
@@ -260,22 +260,26 @@ class EmulatorManager:
                                               capture_output=True, text=True, timeout=10)
 
                     if pm_result.returncode == 0 and 'package:' in pm_result.stdout:
-                        # Check if system UI is running
-                        ui_result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
-                                                   'dumpsys', 'window', '|', 'grep', '-E', 'mCurrentFocus|mFocusedApp'],
-                                                  capture_output=True, text=True, timeout=10)
+                        # Package manager is ready - sufficient for automation
+                        # Additional check: verify device is responsive to getprop
+                        try:
+                            prop_result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
+                                                         'getprop', 'sys.boot_completed'],
+                                                        capture_output=True, text=True, timeout=5)
 
-                        if ui_result.returncode == 0:
-                            system_ready = True
-                            self.logger.info("[TZ] System services are ready")
+                            if prop_result.returncode == 0 and '1' in prop_result.stdout:
+                                system_ready = True
+                                self.logger.info("[TZ] System services are ready")
 
-                            # Give the system a moment to stabilize after all services are up
-                            self.logger.info("[TZ] Waiting for system stabilization (5s)...")
-                            time.sleep(5)
+                                # Give the system a moment to stabilize after all services are up
+                                self.logger.info("[TZ] Waiting for system stabilization (3s)...")
+                                time.sleep(3)
 
-                            total_time = int(time.time() - start_time)
-                            self.logger.info(f"[TZ] Device is fully ready for automation (boot time: {total_time}s)")
-                            return True
+                                total_time = int(time.time() - start_time)
+                                self.logger.info(f"[TZ] Device is fully ready for automation (boot time: {total_time}s)")
+                                return True
+                        except subprocess.TimeoutExpired:
+                            self.logger.debug("[TZ] Device still initializing properties...")
 
             except subprocess.TimeoutExpired:
                 self.logger.debug(f"[TZ] Device not yet responsive ({elapsed}/{timeout}s)")
