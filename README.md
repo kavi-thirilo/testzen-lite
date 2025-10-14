@@ -65,8 +65,9 @@ TestZen Lite is a no-code mobile test automation framework that allows you to cr
 ### Step 1: Installation
 
 **Prerequisites:**
-- Python 3.7 or higher installed on your computer
+- Python 3.8 or higher installed on your computer
 - Node.js and npm installed (for Appium)
+- Android device or emulator - TestZen starts emulators automatically if needed
 
 **1.1 Clone or Download the Repository**
 
@@ -123,6 +124,7 @@ cp /path/to/your-app.ipa apps/ios/
 - Place only ONE APK file in the `apps/android/` folder
 - Place only ONE IPA file in the `apps/ios/` folder
 - TestZen will automatically detect and use your app file
+- Debug APKs work automatically (common when building from Android Studio)
 
 ---
 
@@ -171,6 +173,8 @@ mkdir -p tests/android/your_module_name
 ---
 
 ### Step 4: Run Tests
+
+**No device or emulator running? No problem!** TestZen can auto-launch emulators for you.
 
 **Option A: Using ./testzen Script (Recommended - Auto-Appium)**
 
@@ -275,14 +279,14 @@ TestZen supports up to 3 fallback locators per step. This ensures tests work acr
 
 **For Android:**
 - Android device connected via USB with USB debugging enabled, OR
-- Android emulator running
-- Run `adb devices` to verify device is connected
+- Android emulator configured (doesn't need to be running - TestZen starts it automatically)
+- Optional: Run `adb devices` to verify device status
 
 **For iOS:**
 - macOS computer (required for iOS testing)
 - Xcode installed
-- iOS simulator running or iOS device connected
-- Run `xcrun simctl list` to see available simulators
+- iOS simulator or iOS device connected
+- Optional: Run `xcrun simctl list` to see available simulators
 
 ### Auto-Appium Mode
 
@@ -351,6 +355,26 @@ python testzen.py run --file tests/android/billing/Payment_Form_Validation_Test.
 ```bash
 ./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx --skip-on-fail --device emulator-5554
 ```
+
+### Emulator Management
+
+TestZen provides simple commands to manage Android emulators:
+
+```bash
+# See what emulators are available and which are running
+./testzen emulator list
+
+# Start an emulator (picks the first available)
+./testzen emulator launch
+
+# Start a specific emulator
+./testzen emulator launch --avd Pixel_4_API_30
+
+# Stop the running emulator
+./testzen emulator stop
+```
+
+**Note:** You don't need to manually launch emulators before running tests - TestZen does this automatically when needed.
 
 ---
 
@@ -669,21 +693,7 @@ python testzen.py run --file test.xlsx --auto-appium --keep-appium
 
 ### Emulator Management
 
-TestZen can automatically launch Android emulators:
-
-```bash
-# List available emulators
-./testzen emulator list
-
-# Launch default emulator
-./testzen emulator launch
-
-# Launch specific emulator
-./testzen emulator launch --avd Pixel_4_API_30
-
-# Stop running emulator
-./testzen emulator stop
-```
+See the [Emulator Management](#emulator-management) section for details on managing Android emulators with TestZen commands
 
 ### Skip on Failure Mode
 
