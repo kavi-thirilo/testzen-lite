@@ -662,7 +662,7 @@ kill -9 <PID>  # Replace <PID> with the process ID from above
 cat /tmp/appium.log
 
 # Step 4: Try starting Appium manually to see full error
-appium --allow-insecure=chromedriver_autodownload
+appium --allow-insecure=*:chromedriver_autodownload
 
 # Step 5: Verify Node.js version (needs 16+)
 node --version  # Should be v16 or higher
@@ -673,6 +673,27 @@ node --version  # Should be v16 or higher
 - Port 4723 already in use by another Appium instance
 - Node.js version too old (upgrade to v16+)
 - Missing Appium drivers (run `appium driver install uiautomator2`)
+
+**Problem: Appium 3.x error - "The full feature name must include both the destination automation name"**
+
+Error message: `Fatal Error: The full feature name must include both the destination automation name or the '*' wildcard`
+
+This happens with Appium 3.x because the `--allow-insecure` flag format changed.
+
+Solution:
+
+```bash
+# Wrong (Appium 2.x format - will fail in Appium 3.x):
+appium --allow-insecure=chromedriver_autodownload
+
+# Correct (Appium 3.x format - works with both 2.x and 3.x):
+appium --allow-insecure=*:chromedriver_autodownload
+
+# Or specify driver explicitly:
+appium --allow-insecure=uiautomator2:chromedriver_autodownload
+```
+
+**Note:** The `./testzen` script has been updated to work with both Appium 2.x and 3.x automatically. This issue only affects manual Appium startup.
 
 ### Tests Not Running
 

@@ -53,7 +53,8 @@ start_appium() {
     sleep 2
     
     # Start Appium in background
-    npx appium --allow-insecure=chromedriver_autodownload > /tmp/appium.log 2>&1 &
+    # Note: Appium 3.x requires driver:feature format, using * wildcard for all drivers
+    npx appium --allow-insecure=*:chromedriver_autodownload > /tmp/appium.log 2>&1 &
     APPIUM_PID=$!
     
     # Wait for Appium to start (max 15 seconds)
