@@ -38,32 +38,65 @@ class EmulatorManager:
     def get_connected_devices(self) -> List[Dict[str, str]]:
         """Get list of connected devices and emulators"""
         try:
+            self.logger.debug(f"[TZ] Running: {self.adb_cmd} devices -l")
             result = subprocess.run([self.adb_cmd, 'devices', '-l'],
                                   capture_output=True, text=True, timeout=10)
 
             if result.returncode != 0:
-                self.logger.error(f"Failed to get devices: {result.stderr}")
+                self.logger.error(f"[TZ] Failed to get devices: {result.stderr}")
                 return []
+
+            self.logger.debug(f"[TZ] ADB devices output:\n{result.stdout}")
 
             devices = []
             lines = result.stdout.strip().split('\n')
 
-            for line in lines[1:]:  # Skip header
-                if 'device' in line and line.strip():  # Look for 'device' status in non-empty lines
-                    parts = line.split()
-                    if len(parts) >= 2 and parts[1] == 'device':  # Ensure second column is 'device'
-                        device_id = parts[0]
-                        device_type = 'emulator' if device_id.startswith('emulator-') else 'device'
-                        devices.append({
-                            'id': device_id,
-                            'type': device_type,
-                            'status': 'online'
-                        })
+            # Log each line for debugging
+            self.logger.debug(f"[TZ] Parsing {len(lines)} lines from adb devices")
+            for i, line in enumerate(lines):
+                self.logger.debug(f"[TZ] Line {i}: '{line}'")
+
+            for line in lines[1:]:  # Skip header "List of devices attached"
+                line = line.strip()
+                if not line:  # Skip empty lines
+                    continue
+
+                parts = line.split()
+                if len(parts) < 2:
+                    self.logger.debug(f"[TZ] Skipping line with < 2 parts: '{line}'")
+                    continue
+
+                device_id = parts[0]
+                device_status = parts[1]
+
+                self.logger.debug(f"[TZ] Found device: id={device_id}, status={device_status}")
+
+                # Only include devices with 'device' status (not 'offline', 'unauthorized', etc.)
+                if device_status == 'device':
+                    device_type = 'emulator' if device_id.startswith('emulator-') else 'device'
+                    devices.append({
+                        'id': device_id,
+                        'type': device_type,
+                        'status': 'online'
+                    })
+                    self.logger.info(f"[TZ] Detected available {device_type}: {device_id}")
+                else:
+                    self.logger.warning(f"[TZ] Device {device_id} has status '{device_status}' - not available")
+
+            if not devices:
+                self.logger.warning("[TZ] No devices found with 'device' status")
+            else:
+                self.logger.info(f"[TZ] Found {len(devices)} available device(s)")
 
             return devices
 
+        except subprocess.TimeoutExpired:
+            self.logger.error("[TZ] Timeout while getting device list (adb may be hung)")
+            return []
         except Exception as e:
-            self.logger.error(f"Error getting connected devices: {e}")
+            self.logger.error(f"[TZ] Error getting connected devices: {e}")
+            import traceback
+            self.logger.debug(f"[TZ] Traceback: {traceback.format_exc()}")
             return []
 
     def get_available_avds(self) -> List[str]:
