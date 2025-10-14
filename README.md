@@ -605,6 +605,75 @@ python -m pip install -r requirements.txt
 python3 --version  # Should show Python 3.8 or higher
 ```
 
+**Problem: npm permission error (EACCES) when installing Appium**
+
+Error message: `npm error code: 'EACCES'` or `The operation was rejected by your operating system`
+
+Solution (Choose one):
+
+```bash
+# Option 1 (Recommended): Fix npm permissions permanently
+# This allows npm to install global packages without sudo
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc  # or source ~/.bashrc
+
+# Now install Appium without sudo:
+npm install -g appium
+appium driver install uiautomator2
+
+# Option 2: Use npx (no global install needed)
+# No installation required - npx downloads and runs Appium temporarily
+# TestZen will use npx appium automatically if global appium not found
+
+# Option 3: Use sudo (NOT recommended - security risk)
+sudo npm install -g appium
+```
+
+**After fixing npm permissions, verify installation:**
+```bash
+appium --version  # Should show version number
+which appium      # Should show path to appium
+```
+
+**Problem: "Failed to start Appium server" error**
+
+Error message: `[ERROR] Failed to start Appium server` or `Could not start Appium`
+
+Solution:
+
+```bash
+# Step 1: Check if Appium is installed
+appium --version
+
+# If not installed, install it:
+npm install -g appium
+appium driver install uiautomator2
+
+# Step 2: Check if port 4723 is already in use
+lsof -i :4723  # macOS/Linux
+netstat -ano | findstr :4723  # Windows
+
+# If port is in use, kill the process:
+kill -9 <PID>  # Replace <PID> with the process ID from above
+
+# Step 3: Check detailed error in Appium log
+cat /tmp/appium.log
+
+# Step 4: Try starting Appium manually to see full error
+appium --allow-insecure=chromedriver_autodownload
+
+# Step 5: Verify Node.js version (needs 16+)
+node --version  # Should be v16 or higher
+```
+
+**Common causes:**
+- Appium not installed (fix npm permissions first)
+- Port 4723 already in use by another Appium instance
+- Node.js version too old (upgrade to v16+)
+- Missing Appium drivers (run `appium driver install uiautomator2`)
+
 ### Tests Not Running
 
 **Problem: "No device connected" error**
