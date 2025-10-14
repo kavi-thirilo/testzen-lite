@@ -136,10 +136,10 @@ class TestZenCLI:
             try:
                 with open(self.version_config_path, 'r') as f:
                     config = json.load(f)
-                    return config.get("current_version", "1.2.2")
+                    return config.get("current_version", "1.2.3")
             except:
-                return "1.2.2"
-        return "1.2.2"
+                return "1.2.3"
+        return "1.2.3"
 
 def main():
     parser = argparse.ArgumentParser(
