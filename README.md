@@ -67,7 +67,44 @@ TestZen Lite is a no-code mobile test automation framework that allows you to cr
 **Prerequisites:**
 - Python 3.8 or higher installed on your computer
 - Node.js and npm installed (for Appium)
+- Android SDK and platform tools (see Android Setup below)
 - Android device or emulator - TestZen starts emulators automatically if needed
+
+**Android Setup (Required for Android Testing):**
+
+If you don't have Android development tools set up, you'll need:
+
+**Option 1: Install Android Studio (Easiest - Recommended for beginners)**
+1. Download Android Studio from https://developer.android.com/studio
+2. Install and open Android Studio
+3. Go to Settings → Appearance & Behavior → System Settings → Android SDK
+4. Install Android SDK Platform-Tools and Android SDK Command-line Tools
+5. Create an emulator: Tools → Device Manager → Create Virtual Device
+6. Add to your PATH (add to ~/.zshrc or ~/.bashrc):
+   ```bash
+   export ANDROID_HOME=$HOME/Library/Android/sdk  # macOS
+   # OR export ANDROID_HOME=$HOME/Android/Sdk      # Linux
+   # OR set ANDROID_HOME=C:\Users\YOUR_USERNAME\AppData\Local\Android\Sdk  # Windows
+   export PATH=$PATH:$ANDROID_HOME/platform-tools
+   export PATH=$PATH:$ANDROID_HOME/emulator
+   export PATH=$PATH:$ANDROID_HOME/tools/bin
+   ```
+7. Reload terminal: `source ~/.zshrc` or `source ~/.bashrc`
+8. Verify: `adb version` and `emulator -list-avds`
+
+**Option 2: Install Android Command Line Tools Only (Lighter weight)**
+1. Download command line tools from https://developer.android.com/studio#command-tools
+2. Extract to a folder (e.g., ~/android-sdk)
+3. Set ANDROID_HOME and PATH as shown above
+4. Install platform-tools: `sdkmanager "platform-tools" "emulator"`
+5. Create emulator using avdmanager command
+
+**Verify Android Setup:**
+```bash
+adb version              # Should show Android Debug Bridge version
+emulator -list-avds      # Should list available emulators (may be empty if none created)
+echo $ANDROID_HOME       # Should show path to Android SDK
+```
 
 **1.1 Clone or Download the Repository**
 
@@ -695,6 +732,72 @@ appium --allow-insecure=uiautomator2:chromedriver_autodownload
 
 **Note:** The `./testzen` script has been updated to work with both Appium 2.x and 3.x automatically. This issue only affects manual Appium startup.
 
+### Android SDK Issues
+
+**Problem: "adb: command not found" or "emulator: command not found"**
+
+This means Android SDK is not installed or not in your PATH.
+
+Solution:
+
+```bash
+# Check if ANDROID_HOME is set
+echo $ANDROID_HOME
+
+# If empty, Android SDK is not configured. You need to:
+# 1. Install Android Studio (recommended) OR command line tools
+# 2. Set ANDROID_HOME environment variable
+# 3. Add SDK tools to PATH
+
+# See "Android Setup" section in Step 1: Installation for detailed instructions
+```
+
+**Problem: "ANDROID_HOME environment variable not set"**
+
+Solution:
+```bash
+# Find where Android SDK is installed:
+# Common locations:
+# macOS: ~/Library/Android/sdk
+# Linux: ~/Android/Sdk
+# Windows: C:\Users\YOUR_USERNAME\AppData\Local\Android\Sdk
+
+# Set ANDROID_HOME (add to ~/.zshrc or ~/.bashrc):
+export ANDROID_HOME=$HOME/Library/Android/sdk  # macOS
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/emulator
+
+# Reload your terminal
+source ~/.zshrc  # or source ~/.bashrc
+
+# Verify
+adb version
+```
+
+**Problem: No AVDs (emulators) available**
+
+Error: TestZen can't launch emulator automatically because none exist.
+
+Solution:
+```bash
+# Check available emulators
+emulator -list-avds
+
+# If empty, create one using Android Studio:
+# 1. Open Android Studio
+# 2. Tools → Device Manager
+# 3. Click "Create Virtual Device"
+# 4. Choose a device (e.g., Pixel 4)
+# 5. Choose a system image (e.g., Android 11/API 30)
+# 6. Finish setup
+
+# Verify again
+emulator -list-avds  # Should now show your emulator name
+
+# Or use TestZen to list them
+./testzen emulator list
+```
+
 ### Tests Not Running
 
 **Problem: "No device connected" error**
@@ -708,6 +811,11 @@ adb devices  # Should show at least one device
 # 1. Enable USB debugging on your Android device
 # 2. Connect via USB
 # 3. Accept USB debugging prompt on device
+
+# If still no devices and no emulator:
+# - You need Android SDK installed (see Android SDK Issues above)
+# - Create an AVD emulator (see above)
+# - OR connect a physical Android device with USB debugging enabled
 ```
 
 **Problem: "Appium server not running" error**
