@@ -682,6 +682,59 @@ appium --version  # Should show version number
 which appium      # Should show path to appium
 ```
 
+**Problem: "[Errno 2] No such file or directory: 'adb'" error**
+
+Error message: `[Errno 2] No such file or directory: 'adb'`
+
+**This means**: Android SDK is not installed or not in your PATH.
+
+Solution:
+
+```bash
+# Step 1: Check if ANDROID_HOME is set
+echo $ANDROID_HOME
+
+# If empty, you need to install Android SDK and set ANDROID_HOME
+# See "Android Setup" section in Step 1: Installation for complete instructions
+
+# Quick fix if SDK is already installed but not in PATH:
+export ANDROID_HOME=$HOME/Library/Android/sdk  # macOS
+# OR export ANDROID_HOME=$HOME/Android/Sdk      # Linux
+
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$ANDROID_HOME/emulator
+
+# Make it permanent:
+echo 'export ANDROID_HOME=$HOME/Library/Android/sdk' >> ~/.zshrc
+echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.zshrc
+source ~/.zshrc
+
+# Verify:
+adb version  # Should show Android Debug Bridge version
+```
+
+**Problem: "Could not find a driver for automationName 'UiAutomator2'" error**
+
+Error message: `Could not find a driver for automationName 'UiAutomator2' and platformName 'Android'`
+
+**This means**: The Appium uiautomator2 driver is not installed.
+
+Solution:
+
+```bash
+# Install the driver
+appium driver install uiautomator2
+
+# Verify it's installed
+appium driver list --installed
+
+# Should show:
+# - uiautomator2@...
+
+# Now run your test again
+./testzen run --file your_test.xlsx
+```
+
 **Problem: "Failed to start Appium server" error**
 
 Error message: `[ERROR] Failed to start Appium server` or `Could not start Appium`

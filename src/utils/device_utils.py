@@ -119,7 +119,26 @@ class DeviceManager:
 
         self.color_logger.info(f"[TZ] Verifying device is ready for automation (timeout: {timeout}s)...")
 
-        # First, ensure adb server is running and restart it to clear any stale connections
+        # First, check if adb is available
+        try:
+            subprocess.run(['adb', 'version'], capture_output=True, timeout=5, check=True)
+        except FileNotFoundError:
+            self.color_logger.error("[TZ] ERROR: 'adb' command not found!")
+            self.color_logger.error("[TZ] Android SDK is not installed or not in PATH")
+            self.color_logger.error("[TZ] ")
+            self.color_logger.error("[TZ] Quick Fix:")
+            self.color_logger.error("[TZ] 1. Install Android SDK / Android Studio")
+            self.color_logger.error("[TZ] 2. Set ANDROID_HOME environment variable:")
+            self.color_logger.error("[TZ]    export ANDROID_HOME=$HOME/Library/Android/sdk")
+            self.color_logger.error("[TZ]    export PATH=$PATH:$ANDROID_HOME/platform-tools")
+            self.color_logger.error("[TZ] 3. Reload terminal: source ~/.zshrc")
+            self.color_logger.error("[TZ] ")
+            self.color_logger.error("[TZ] See README 'Android Setup' section for details")
+            return False
+        except Exception as e:
+            self.color_logger.warning(f"[TZ] Could not verify adb: {e}")
+
+        # Now restart adb server to clear any stale connections
         try:
             self.color_logger.debug("[TZ] Restarting adb server to ensure clean connection...")
             subprocess.run(['adb', 'kill-server'], capture_output=True, timeout=5)
@@ -203,6 +222,25 @@ class DeviceManager:
             if not self.ensure_device_ready():
                 return False
 
+            # Check if uiautomator2 driver is installed
+            self.color_logger.step("Verifying Appium driver installation...")
+            try:
+                result = subprocess.run(['appium', 'driver', 'list', '--installed'],
+                                      capture_output=True, text=True, timeout=10)
+                if 'uiautomator2' not in result.stdout:
+                    self.color_logger.error("[TZ] ERROR: Appium uiautomator2 driver not installed!")
+                    self.color_logger.error("[TZ] ")
+                    self.color_logger.error("[TZ] Quick Fix:")
+                    self.color_logger.error("[TZ] Run: appium driver install uiautomator2")
+                    self.color_logger.error("[TZ] ")
+                    self.color_logger.error("[TZ] Then restart your test")
+                    return False
+                else:
+                    self.color_logger.success("[TZ] Appium uiautomator2 driver is installed")
+            except Exception as e:
+                self.color_logger.warning(f"[TZ] Could not verify Appium driver: {e}")
+                self.color_logger.warning("[TZ] Proceeding anyway...")
+
             self.color_logger.step(f"Connecting to device: {self.options.device_name}")
             self.color_logger.info(f"Appium server: http://localhost:4723")
 
@@ -226,13 +264,24 @@ class DeviceManager:
                     self.color_logger.warning(f"Device response test failed: {resp_error}")
 
             except SessionNotCreatedException as se:
-                self.color_logger.error(f"Session creation failed: {se}")
+                error_msg = str(se)
+                if "Could not find a driver for automationName" in error_msg or "UiAutomator2" in error_msg:
+                    self.color_logger.error("[TZ] Appium driver not found!")
+                    self.color_logger.error("[TZ] ")
+                    self.color_logger.error("[TZ] Quick Fix:")
+                    self.color_logger.error("[TZ] 1. Install uiautomator2 driver:")
+                    self.color_logger.error("[TZ]    appium driver install uiautomator2")
+                    self.color_logger.error("[TZ] 2. Verify installation:")
+                    self.color_logger.error("[TZ]    appium driver list --installed")
+                    self.color_logger.error("[TZ] 3. Restart your test")
+                else:
+                    self.color_logger.error(f"[TZ] Session creation failed: {se}")
                 raise
             except WebDriverException as we:
-                self.color_logger.error(f"WebDriver error: {we}")
+                self.color_logger.error(f"[TZ] WebDriver error: {we}")
                 raise
             except Exception as e:
-                self.color_logger.error(f"Connection error: {e}")
+                self.color_logger.error(f"[TZ] Connection error: {e}")
                 raise
             finally:
                 socket.setdefaulttimeout(original_timeout)
