@@ -53,9 +53,8 @@ start_appium() {
     sleep 2
     
     # Start Appium in background
-    cd appium-web-inspector && npx appium --allow-insecure=chromedriver_autodownload > /tmp/appium.log 2>&1 &
+    npx appium --allow-insecure=chromedriver_autodownload > /tmp/appium.log 2>&1 &
     APPIUM_PID=$!
-    cd ..
     
     # Wait for Appium to start (max 15 seconds)
     echo -n "    Waiting for Appium to initialize"

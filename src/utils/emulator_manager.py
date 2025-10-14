@@ -162,54 +162,139 @@ class EmulatorManager:
             return False
 
     def _wait_for_emulator_boot(self, timeout: int = 120) -> bool:
-        """Wait for emulator to fully boot"""
-        self.logger.info("[TZ] Waiting for emulator to boot...")
+        """
+        Wait for emulator to fully boot
+
+        Args:
+            timeout: Maximum time to wait in seconds (default: 120s)
+
+        Returns:
+            True if emulator boots successfully, False if timeout occurs
+        """
+        self.logger.info(f"[TZ] Waiting for emulator to boot (timeout: {timeout}s)...")
         start_time = time.time()
 
         # First, wait for emulator to appear in devices list
         while time.time() - start_time < timeout:
+            elapsed = int(time.time() - start_time)
+            remaining = timeout - elapsed
+
             devices = self.get_connected_devices()
             emulators = [d for d in devices if d['type'] == 'emulator']
 
             if emulators:
                 emulator_id = emulators[0]['id']
-                self.logger.info(f"[TZ] Emulator detected: {emulator_id}")
+                self.logger.info(f"[TZ] Emulator detected: {emulator_id} (after {elapsed}s)")
 
-                # Wait for boot completion
-                if self._wait_for_boot_complete(emulator_id,
-                                               timeout - int(time.time() - start_time)):
-                    self.logger.info("[TZ] Emulator fully booted and ready")
+                # Wait for boot completion with remaining time
+                if self._wait_for_boot_complete(emulator_id, remaining):
+                    total_time = int(time.time() - start_time)
+                    self.logger.info(f"[TZ] Emulator fully booted and ready (total time: {total_time}s)")
                     return True
+                else:
+                    # Boot completion timed out
+                    self.logger.error(f"[TZ] Emulator boot completion timed out after {timeout}s")
+                    return False
+
+            # Still waiting for emulator to appear
+            if elapsed % 10 == 0 and elapsed > 0:  # Log every 10 seconds
+                self.logger.info(f"[TZ] Still waiting for emulator... ({elapsed}/{timeout}s)")
 
             time.sleep(2)
 
-        self.logger.error("[TZ] Emulator boot timeout")
+        # Timeout reached without emulator appearing
+        self.logger.error(f"[TZ] Emulator failed to appear after {timeout}s timeout")
         return False
 
     def _wait_for_boot_complete(self, device_id: str, timeout: int = 60) -> bool:
-        """Wait for device boot to complete"""
+        """
+        Wait for device boot to complete and system to be fully ready for automation
+
+        This method performs comprehensive readiness checks:
+        1. Basic boot completion (sys.boot_completed)
+        2. Boot animation stopped (init.svc.bootanim)
+        3. Package manager ready and responsive
+        4. System services fully initialized
+
+        Args:
+            device_id: Device ID to monitor
+            timeout: Maximum time to wait in seconds (default: 60s)
+
+        Returns:
+            True if device is fully ready, False if timeout occurs
+        """
         start_time = time.time()
+        boot_checks_passed = False
+        system_ready = False
+
+        self.logger.info(f"[TZ] Waiting for boot completion (timeout: {timeout}s)...")
 
         while time.time() - start_time < timeout:
+            elapsed = int(time.time() - start_time)
+            remaining = timeout - elapsed
+
             try:
-                # Check if boot completed
-                result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
-                                       'getprop', 'sys.boot_completed'],
-                                      capture_output=True, text=True, timeout=5)
+                # Step 1: Check if boot completed
+                if not boot_checks_passed:
+                    result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
+                                           'getprop', 'sys.boot_completed'],
+                                          capture_output=True, text=True, timeout=5)
 
-                if result.returncode == 0 and '1' in result.stdout.strip():
-                    # Additional check for boot animation
-                    anim_result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
-                                                'getprop', 'init.svc.bootanim'],
-                                               capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0 and '1' in result.stdout.strip():
+                        # Additional check for boot animation
+                        anim_result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
+                                                    'getprop', 'init.svc.bootanim'],
+                                                   capture_output=True, text=True, timeout=5)
 
-                    if anim_result.returncode == 0 and 'stopped' in anim_result.stdout:
-                        return True
-            except:
-                pass
+                        if anim_result.returncode == 0 and 'stopped' in anim_result.stdout:
+                            boot_checks_passed = True
+                            self.logger.info(f"[TZ] Boot animation completed (after {elapsed}s)")
 
-            time.sleep(2)
+                # Step 2: Check if package manager is ready
+                if boot_checks_passed and not system_ready:
+                    self.logger.info("[TZ] Verifying system services...")
 
+                    # Check package manager responsiveness
+                    pm_result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
+                                               'pm', 'list', 'packages', '-e'],
+                                              capture_output=True, text=True, timeout=10)
+
+                    if pm_result.returncode == 0 and 'package:' in pm_result.stdout:
+                        # Check if system UI is running
+                        ui_result = subprocess.run([self.adb_cmd, '-s', device_id, 'shell',
+                                                   'dumpsys', 'window', '|', 'grep', '-E', 'mCurrentFocus|mFocusedApp'],
+                                                  capture_output=True, text=True, timeout=10)
+
+                        if ui_result.returncode == 0:
+                            system_ready = True
+                            self.logger.info("[TZ] System services are ready")
+
+                            # Give the system a moment to stabilize after all services are up
+                            self.logger.info("[TZ] Waiting for system stabilization (5s)...")
+                            time.sleep(5)
+
+                            total_time = int(time.time() - start_time)
+                            self.logger.info(f"[TZ] Device is fully ready for automation (boot time: {total_time}s)")
+                            return True
+
+            except subprocess.TimeoutExpired:
+                self.logger.debug(f"[TZ] Device not yet responsive ({elapsed}/{timeout}s)")
+            except Exception as e:
+                self.logger.debug(f"[TZ] Boot check error (expected during boot): {e}")
+
+            # Progress logging every 10 seconds
+            if elapsed % 10 == 0 and elapsed > 0:
+                status = "Waiting for boot..." if not boot_checks_passed else "Waiting for system services..."
+                self.logger.info(f"[TZ] {status} ({elapsed}/{timeout}s)")
+
+            time.sleep(3)
+
+        # Timeout reached
+        self.logger.error(f"[TZ] Device boot timeout after {timeout}s - device not ready")
+        if boot_checks_passed:
+            self.logger.error("[TZ] Boot completed but system services failed to initialize")
+        else:
+            self.logger.error("[TZ] Device failed to complete boot process")
         return False
 
     def stop_emulator(self, device_id: str = None) -> bool:

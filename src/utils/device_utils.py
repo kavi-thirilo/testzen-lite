@@ -64,6 +64,9 @@ class DeviceManager:
                 else:
                     # For physical devices, use the provided name or device ID
                     self.options.device_name = self.device_name or device_id
+
+                # Wait for device to be fully ready for automation (not just booted)
+                self._wait_for_device_automation_ready(device_id)
                 return True
             else:
                 print("[TZ] No device available and failed to launch emulator")
@@ -80,6 +83,9 @@ class DeviceManager:
                 self.actual_device_id = devices[0]['id']
                 self.options.device_name = self.actual_device_id
                 print(f"[TZ] Using device: {self.actual_device_id}")
+
+                # Wait for device to be fully ready
+                self._wait_for_device_automation_ready(self.actual_device_id)
                 return True
 
             # Check if specified device is connected
@@ -88,10 +94,59 @@ class DeviceManager:
                                         self.device_name in device['id']):
                     self.actual_device_id = device['id']
                     self.options.device_name = self.actual_device_id
+
+                    # Wait for device to be fully ready
+                    self._wait_for_device_automation_ready(self.actual_device_id)
                     return True
 
             self.color_logger.error(f"Specified device '{self.device_name}' not found")
             return False
+
+    def _wait_for_device_automation_ready(self, device_id: str, timeout: int = 30) -> bool:
+        """
+        Wait for device to be fully ready for Appium automation.
+        This ensures UiAutomator2 can connect without timeout issues.
+
+        Args:
+            device_id: Device ID to check
+            timeout: Maximum time to wait in seconds (default: 30s)
+
+        Returns:
+            True if device is ready, False if timeout occurs
+        """
+        import subprocess
+        start_time = time.time()
+
+        self.color_logger.info(f"[TZ] Verifying device is ready for automation (timeout: {timeout}s)...")
+
+        while time.time() - start_time < timeout:
+            elapsed = int(time.time() - start_time)
+            remaining = timeout - elapsed
+
+            try:
+                # Check if device responds to basic commands
+                result = subprocess.run(['adb', '-s', device_id, 'shell', 'pm', 'list', 'packages', '-e'],
+                                      capture_output=True, text=True, timeout=5)
+
+                if result.returncode == 0 and 'package:' in result.stdout:
+                    # Device is responsive
+                    self.color_logger.success(f"[TZ] Device is ready for automation (verified in {elapsed}s)")
+                    return True
+
+            except subprocess.TimeoutExpired:
+                self.color_logger.debug(f"[TZ] Device still initializing ({elapsed}/{timeout}s)")
+            except Exception as e:
+                self.color_logger.debug(f"[TZ] Device check error: {e}")
+
+            # Progress logging every 10 seconds
+            if elapsed % 10 == 0 and elapsed > 0:
+                self.color_logger.info(f"[TZ] Still verifying device readiness... ({elapsed}/{timeout}s)")
+
+            time.sleep(2)
+
+        # Timeout reached
+        self.color_logger.warning(f"[TZ] Device readiness check timed out after {timeout}s, proceeding anyway...")
+        return False
 
     def connect(self):
         """Connect to device with auto-launch support"""
@@ -115,9 +170,10 @@ class DeviceManager:
             self.color_logger.info(f"Appium server: http://localhost:4723")
 
             # Add connection timeout to prevent hanging
+            # Device readiness is verified before this point, so 60s is sufficient for session creation
             import socket
             original_timeout = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(30)  # 30 second timeout
+            socket.setdefaulttimeout(60)  # 60 second timeout for session creation
 
             try:
                 from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
@@ -155,9 +211,10 @@ class DeviceManager:
                 if self.ensure_device_ready():
                     try:
                         # Add connection timeout to prevent hanging
+                        # Device readiness is verified before this point, so 60s is sufficient
                         import socket
                         original_timeout = socket.getdefaulttimeout()
-                        socket.setdefaulttimeout(30)  # 30 second timeout
+                        socket.setdefaulttimeout(60)  # 60 second timeout for session creation
                         try:
                             self.driver = webdriver.Remote("http://localhost:4723", options=self.options)
                             self.color_logger.success("Connected to emulator successfully")
@@ -233,34 +290,147 @@ class DeviceManager:
             return False
 
     def launch_app(self, package_name):
-        """Launch app on device"""
+        """
+        Launch app on device using proper activity manager
+
+        Args:
+            package_name: Package name of the app to launch
+
+        Returns:
+            True if app launched successfully, False otherwise
+        """
         try:
+            import os
+            import glob
+
+            # Check if app is installed
+            check_result = subprocess.run(['adb', 'shell', 'pm', 'list', 'packages', package_name],
+                                         capture_output=True, text=True, timeout=10)
+
+            if package_name not in check_result.stdout:
+                self.color_logger.warning(f"App {package_name} not installed. Attempting to install...")
+
+                # Find APK in apps/android folder
+                apk_pattern = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                          'apps', 'android', '*.apk')
+                apk_files = glob.glob(apk_pattern)
+
+                if apk_files:
+                    apk_path = apk_files[0]
+                    self.color_logger.info(f"Found APK: {os.path.basename(apk_path)}")
+
+                    # Install the APK
+                    install_result = subprocess.run(['adb', 'install', '-r', '-t', apk_path],
+                                                   capture_output=True, text=True, timeout=60)
+
+                    if install_result.returncode == 0:
+                        self.color_logger.success(f"Successfully installed {os.path.basename(apk_path)}")
+                    else:
+                        self.color_logger.error(f"Failed to install APK: {install_result.stderr}")
+                        return False
+                else:
+                    self.color_logger.error(f"No APK found in apps/android/ directory")
+                    return False
+
             # First, force stop any existing instance
-            subprocess.run(['adb', 'shell', 'am', 'force-stop', package_name], 
-                          capture_output=True, text=True)
+            subprocess.run(['adb', 'shell', 'am', 'force-stop', package_name],
+                          capture_output=True, text=True, timeout=10)
             time.sleep(1)
-            
+
             # Kill any LeakCanary processes before launching
-            subprocess.run(['adb', 'shell', 'am', 'force-stop', 'com.squareup.leakcanary'], 
-                          capture_output=True, text=True)
-            subprocess.run(['adb', 'shell', 'am', 'force-stop', 'leakcanary'], 
-                          capture_output=True, text=True)
-            
-            # Launch using package launcher
-            result = subprocess.run(['adb', 'shell', 'monkey', '-p', package_name,
-                                   '-c', 'android.intent.category.LAUNCHER', '1'],
-                                  capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                print(f"[TZ] Successfully launched {package_name}")
-                time.sleep(5)  # Wait for app to initialize
-                return True
+            subprocess.run(['adb', 'shell', 'am', 'force-stop', 'com.squareup.leakcanary'],
+                          capture_output=True, text=True, timeout=5)
+            subprocess.run(['adb', 'shell', 'am', 'force-stop', 'leakcanary'],
+                          capture_output=True, text=True, timeout=5)
+
+            # Get the launcher activity for this package
+            launcher_activity = self._get_launcher_activity(package_name)
+
+            if launcher_activity:
+                # Launch using activity manager with explicit activity
+                result = subprocess.run(['adb', 'shell', 'am', 'start', '-n',
+                                       f"{package_name}/{launcher_activity}",
+                                       '-a', 'android.intent.action.MAIN',
+                                       '-c', 'android.intent.category.LAUNCHER'],
+                                      capture_output=True, text=True, timeout=15)
+
+                if result.returncode == 0 or 'Starting:' in result.stdout:
+                    print(f"[TZ] Successfully launched {package_name}")
+                    time.sleep(5)  # Wait for app to initialize
+                    return True
+                else:
+                    print(f"[TZ] Launch failed: {result.stderr}")
+                    # Try monkey command as fallback
+                    return self._launch_with_monkey(package_name)
             else:
-                print(f"[TZ] Launch failed: {result.stderr}")
-                return False
-                    
+                # No specific activity found, try monkey command
+                self.color_logger.warning("Could not find launcher activity, trying monkey command...")
+                return self._launch_with_monkey(package_name)
+
         except Exception as e:
             print(f"[TZ] Launch error: {e}")
+            return False
+
+    def _get_launcher_activity(self, package_name):
+        """
+        Get the main launcher activity for a package
+
+        Args:
+            package_name: Package name to query
+
+        Returns:
+            Activity name (without package prefix) or None if not found
+        """
+        try:
+            result = subprocess.run(['adb', 'shell', 'dumpsys', 'package', package_name],
+                                   capture_output=True, text=True, timeout=10)
+
+            if result.returncode == 0:
+                # Look for the MAIN/LAUNCHER intent filter
+                lines = result.stdout.split('\n')
+                for i, line in enumerate(lines):
+                    if 'android.intent.action.MAIN' in line:
+                        # Search backwards for the Activity line
+                        for j in range(i-1, max(0, i-20), -1):
+                            if 'Activity' in lines[j] and package_name in lines[j]:
+                                # Extract activity name
+                                parts = lines[j].split()
+                                for part in parts:
+                                    if package_name in part and '/' in part:
+                                        activity = part.split()[-1]
+                                        # Remove package prefix if present
+                                        if '/' in activity:
+                                            activity = activity.split('/')[-1]
+                                        return activity
+                return None
+        except Exception as e:
+            self.color_logger.debug(f"Error getting launcher activity: {e}")
+            return None
+
+    def _launch_with_monkey(self, package_name):
+        """
+        Fallback method to launch app using monkey command
+
+        Args:
+            package_name: Package name to launch
+
+        Returns:
+            True if launch succeeded, False otherwise
+        """
+        try:
+            result = subprocess.run(['adb', 'shell', 'monkey', '-p', package_name,
+                                   '-c', 'android.intent.category.LAUNCHER', '1'],
+                                  capture_output=True, text=True, timeout=15)
+
+            if result.returncode == 0 and 'Events injected' in result.stdout:
+                print(f"[TZ] Successfully launched {package_name} using monkey")
+                time.sleep(5)
+                return True
+            else:
+                print(f"[TZ] Monkey launch failed: {result.stdout}")
+                return False
+        except Exception as e:
+            print(f"[TZ] Monkey launch error: {e}")
             return False
 
     def force_stop_app(self, package_name):
