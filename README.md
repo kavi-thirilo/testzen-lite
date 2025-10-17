@@ -308,9 +308,9 @@ After running tests, HTML report shows:
 
 ## Version
 
-Current version: **1.2.3**
+Current version: **1.2.4**
 
-See [Release Notes](docs/releases/v1.2.3.md) for changelog.
+See [Release Notes](docs/releases/RELEASE_NOTES_v1.2.4.md) for changelog.
 
 ---
 
