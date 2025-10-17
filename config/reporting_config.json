@@ -20,5 +20,5 @@
     }
   },
   "multi_reporter": false,
-  "description": "TestZen Reporting Configuration - Change 'default_reporter' to 'html' or 'allure' to switch reporting formats"
+  "description": "TestZen Reporting Configuration - Change 'default_reporter' to switch between 'html' or 'allure'. Set 'multi_reporter' to true to generate both reports simultaneously."
 }

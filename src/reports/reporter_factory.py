@@ -7,10 +7,11 @@ Dynamically creates reporters based on configuration
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from src.reports.base_reporter import BaseReporter
 from src.reports.professional_reporter import ProfessionalReporter
 from src.reports.allure_reporter import AllureReporter
+from src.reports.multi_reporter import MultiReporter
 
 
 class ReporterFactory:
@@ -61,10 +62,21 @@ class ReporterFactory:
                           If None, uses the default from config
 
         Returns:
-            BaseReporter: An instance of the appropriate reporter
+            BaseReporter: An instance of the appropriate reporter (single or multi)
         """
         config = ReporterFactory.load_config()
 
+        # Check if multi-reporter mode is enabled
+        multi_reporter = config.get("multi_reporter", False)
+
+        if multi_reporter:
+            return ReporterFactory._create_multi_reporter(excel_file_name, config)
+        else:
+            return ReporterFactory._create_single_reporter(excel_file_name, reporter_type, config)
+
+    @staticmethod
+    def _create_single_reporter(excel_file_name: str, reporter_type: Optional[str], config: dict) -> BaseReporter:
+        """Create a single reporter instance"""
         # Determine which reporter to use
         if reporter_type is None:
             reporter_type = config.get("default_reporter", ReporterFactory.DEFAULT_REPORTER)
@@ -95,6 +107,33 @@ class ReporterFactory:
             print(f"\n[ReporterFactory] Unknown reporter type: {reporter_type}")
             print(f"[ReporterFactory] Using HTML reporter as fallback")
             return ProfessionalReporter(excel_file_name=excel_file_name)
+
+    @staticmethod
+    def _create_multi_reporter(excel_file_name: str, config: dict) -> MultiReporter:
+        """Create a multi-reporter with all enabled reporters"""
+        print(f"\n[ReporterFactory] Multi-reporter mode enabled")
+
+        reporters_config = config.get("reporters", {})
+        reporter_instances = []
+
+        # Create all enabled reporters
+        for reporter_type, reporter_config in reporters_config.items():
+            if reporter_config.get("enabled", True):
+                print(f"[ReporterFactory] Creating {reporter_type} reporter")
+
+                if reporter_type == "allure":
+                    reporter_instances.append(AllureReporter(excel_file_name=excel_file_name))
+                elif reporter_type == "html":
+                    reporter_instances.append(ProfessionalReporter(excel_file_name=excel_file_name))
+                else:
+                    print(f"[ReporterFactory] Warning: Unknown reporter type '{reporter_type}', skipping")
+
+        if not reporter_instances:
+            print(f"[ReporterFactory] Warning: No enabled reporters found, using HTML reporter")
+            reporter_instances.append(ProfessionalReporter(excel_file_name=excel_file_name))
+
+        # Create and return multi-reporter
+        return MultiReporter(reporters=reporter_instances)
 
     @staticmethod
     def get_available_reporters() -> list:

@@ -37,7 +37,7 @@ venv.bak/
 .DS_Store
 
 # Test reports (keep for local review but not in repo)
-reports/
+/reports/
 
 # Logs
 *.log

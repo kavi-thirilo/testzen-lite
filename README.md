@@ -94,6 +94,9 @@ TestZen supports two reporting formats (configured in `config/reporting_config.j
 
 After test completes, view Allure report:
 ```bash
+# IMPORTANT: Run this command from the testzen-lite directory
+# (where you ran the test)
+
 # Open Allure report (starts local web server)
 allure open reports/allure-report
 
@@ -101,7 +104,10 @@ allure open reports/allure-report
 allure serve reports/allure-results
 ```
 
-**Important:** Never double-click `index.html` - Allure reports must be served via HTTP.
+**Important Notes:**
+- Never double-click `index.html` - Allure reports must be served via HTTP
+- Always run `allure open` from the framework directory (testzen-lite)
+- The `reports/` path is relative to your project directory
 
 Report shows:
 - Interactive timeline and trends
@@ -187,18 +193,51 @@ npm install -g allure-commandline
 
 After changing, run your tests normally. View reports with `allure open reports/allure-report`
 
+### Enable Multi-Reporter Mode (Both Reports)
+
+To generate both Allure and HTML reports simultaneously:
+
+1. Open `config/reporting_config.json`
+2. Set `"multi_reporter"` to `true`
+3. Ensure both reporters are enabled
+4. Save the file
+
+```json
+{
+  "default_reporter": "allure",
+  "multi_reporter": true,
+  "reporters": {
+    "allure": {
+      "enabled": true
+    },
+    "html": {
+      "enabled": true
+    }
+  }
+}
+```
+
+After changing, run your tests normally. Both reports will be generated:
+- Allure: `reports/allure-report/index.html` (view with `allure open reports/allure-report` from framework directory)
+- HTML: `reports/<test_name>_report.html` (open directly in browser)
+
+**Note:** Multi-reporter mode is useful for:
+- Generating reports for different audiences (technical team vs stakeholders)
+- Having backup reports in different formats
+- Local HTML for quick review + Allure for CI/CD
+
 ### Comparison
 
-| Feature | Allure Reports | HTML Reports |
-|---------|---------------|--------------|
-| Interactive Dashboard | Yes | No |
-| Test History & Trends | Yes | No |
-| Flaky Test Detection | Yes | No |
-| Viewing Method | Requires web server | Direct browser open |
-| Installation | Requires Allure CLI | No dependencies |
-| CI/CD Integration | Excellent | Good |
-| Report Size | Larger | Smaller |
-| Best For | Teams, CI/CD, Analytics | Quick local testing |
+| Feature | Allure Reports | HTML Reports | Multi-Reporter |
+|---------|---------------|--------------|----------------|
+| Interactive Dashboard | Yes | No | Both |
+| Test History & Trends | Yes | No | Both |
+| Flaky Test Detection | Yes | No | Both |
+| Viewing Method | Requires web server | Direct browser open | Both |
+| Installation | Requires Allure CLI | No dependencies | Requires Allure CLI |
+| CI/CD Integration | Excellent | Good | Excellent |
+| Report Size | Larger | Smaller | Both (larger total) |
+| Best For | Teams, CI/CD, Analytics | Quick local testing | Maximum flexibility |
 
 ---
 
