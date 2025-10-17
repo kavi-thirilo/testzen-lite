@@ -6,6 +6,28 @@ Perfect for QA testers, manual testers wanting to automate, and teams needing qu
 
 ---
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+  - [1. Clone Repository](#1-clone-repository)
+  - [2. Add Your Mobile App](#2-add-your-mobile-app)
+  - [3. Run Sample Test](#3-run-sample-test)
+  - [4. View Test Report](#4-view-test-report)
+- [Configure Reporting (Allure vs HTML)](#configure-reporting-allure-vs-html)
+- [Create Your Own Tests](#create-your-own-tests)
+- [Where to Keep Files](#where-to-keep-files)
+- [Command Reference](#command-reference)
+- [Setup Issues](#setup-issues)
+- [Documentation](#documentation)
+- [Key Features](#key-features)
+- [System Requirements](#system-requirements)
+- [Quick Links](#quick-links)
+- [Example Test Report](#example-test-report)
+- [Need Help](#need-help)
+- [Version](#version)
+
+---
+
 ## Quick Start
 
 ### 1. Clone Repository
@@ -37,17 +59,30 @@ cp /path/to/your-app.ipa apps/ios/
 
 ### 3. Run Sample Test
 
+Run the included sample test to verify everything works:
+
 ```bash
 ./testzen run --file tests/android/billing/Payment_Form_Validation_Test.xlsx
 ```
 
-TestZen will:
-- Install prerequisites (if needed)
-- Start Appium server automatically
-- Launch emulator (if no device connected)
-- Install your app
-- Run the test
-- Generate HTML report
+**What TestZen does automatically:**
+- Checks and installs prerequisites (if needed)
+- Starts Appium server automatically
+- Launches emulator (if no device connected)
+- Installs your app on the device
+- Executes test steps from Excel file
+- Takes screenshots at each step
+- Generates interactive Allure report
+
+**Expected output:**
+```
+[TZ] Starting test execution...
+[TZ] Device: emulator-5554 (connected)
+[TZ] Installing app...
+[TZ] Running 15 test steps...
+[TZ] Test completed successfully!
+[Allure] Report generated: reports/allure-report/index.html
+```
 
 ---
 
@@ -88,8 +123,82 @@ Open directly in browser to see:
 - Execution time
 - Detailed error messages
 
-**Switch Reporting Format:**
-Edit `config/reporting_config.json` and change `default_reporter` to `"html"` or `"allure"`
+---
+
+## Configure Reporting (Allure vs HTML)
+
+TestZen supports two reporting formats. You can easily switch between them by editing the configuration file.
+
+### Current Configuration
+
+The reporter is configured in `config/reporting_config.json`:
+
+```json
+{
+  "default_reporter": "allure",
+  "reporters": {
+    "allure": {
+      "enabled": true,
+      "output_dir": "reports/allure-results",
+      "report_dir": "reports/allure-report"
+    },
+    "html": {
+      "enabled": true,
+      "output_dir": "reports",
+      "template": "professional"
+    }
+  }
+}
+```
+
+### Switch to HTML Reports
+
+If you prefer standalone HTML reports instead of Allure:
+
+1. Open `config/reporting_config.json`
+2. Change `"default_reporter"` from `"allure"` to `"html"`
+3. Save the file
+
+```json
+{
+  "default_reporter": "html",
+  ...
+}
+```
+
+After changing, run your tests normally. Reports will be generated at `reports/<test_name>_report.html`
+
+### Switch to Allure Reports (Default)
+
+To use Allure reports:
+
+1. Open `config/reporting_config.json`
+2. Change `"default_reporter"` to `"allure"`
+3. Save the file
+4. Make sure Allure CLI is installed:
+
+```bash
+# macOS:
+brew install allure
+
+# Or npm (all platforms):
+npm install -g allure-commandline
+```
+
+After changing, run your tests normally. View reports with `allure open reports/allure-report`
+
+### Comparison
+
+| Feature | Allure Reports | HTML Reports |
+|---------|---------------|--------------|
+| Interactive Dashboard | Yes | No |
+| Test History & Trends | Yes | No |
+| Flaky Test Detection | Yes | No |
+| Viewing Method | Requires web server | Direct browser open |
+| Installation | Requires Allure CLI | No dependencies |
+| CI/CD Integration | Excellent | Good |
+| Report Size | Larger | Smaller |
+| Best For | Teams, CI/CD, Analytics | Quick local testing |
 
 ---
 
