@@ -1,0 +1,24 @@
+{
+  "default_reporter": "allure",
+  "reporters": {
+    "allure": {
+      "enabled": true,
+      "output_dir": "reports/allure-results",
+      "report_dir": "reports/allure-report",
+      "clean_results": false,
+      "attach_screenshots": true,
+      "attach_logs": true,
+      "categories": true,
+      "history": true
+    },
+    "html": {
+      "enabled": true,
+      "output_dir": "reports",
+      "template": "professional",
+      "include_screenshots": true,
+      "include_logs": true
+    }
+  },
+  "multi_reporter": false,
+  "description": "TestZen Reporting Configuration - Change 'default_reporter' to 'html' or 'allure' to switch reporting formats"
+}

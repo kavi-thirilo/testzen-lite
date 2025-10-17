@@ -12,7 +12,7 @@ import pandas as pd
 from src.utils.device_utils import DeviceManager, ElementFinder
 from src.utils.excel_utils import ExcelManager
 from src.utils.compose_helper import ComposeUIHelper
-from src.reports.professional_reporter import ProfessionalReporter
+from src.reports.reporter_factory import ReporterFactory
 from src.utils.color_logger import ColorLogger
 
 class TestZenAutomation:
@@ -39,7 +39,8 @@ class TestZenAutomation:
         self.excel_manager = ExcelManager(excel_file)
         self.element_finder = None
         self.compose_helper = None
-        self.professional_reporter = ProfessionalReporter(excel_file_name=excel_file)
+        # Use reporter factory to create appropriate reporter based on config
+        self.professional_reporter = ReporterFactory.create_reporter(excel_file_name=excel_file)
         self.total_steps = 0
         self.passed_steps = 0
         self.failed_steps = 0

@@ -4,11 +4,32 @@
 
 ## Overview
 
-This release focuses on documentation improvements and better troubleshooting support for emulator-related issues.
+This release introduces Allure reporting integration, enhanced documentation, and better troubleshooting support for emulator-related issues.
 
 ---
 
 ## What's New
+
+### Allure Reporting Integration
+
+**Professional Interactive Reports**
+- Added Allure reporting framework as default reporter
+- Generates interactive HTML reports with rich visualizations
+- Includes test history, trends, and flaky test detection
+- Supports screenshot attachments for each test step
+- Provides timeline views and execution analytics
+
+**Configurable Reporter System**
+- New `config/reporting_config.json` for easy reporter switching
+- Support for both Allure and custom HTML reports
+- Automatic cleanup of old report files before each test run
+- Reporter factory pattern for extensibility
+
+**New Files Added:**
+- `src/reports/allure_reporter.py` - Allure report generator
+- `src/reports/base_reporter.py` - Reporter interface
+- `src/reports/reporter_factory.py` - Reporter factory
+- `config/reporting_config.json` - Reporter configuration
 
 ### Documentation Improvements
 
@@ -29,6 +50,23 @@ This release focuses on documentation improvements and better troubleshooting su
 ---
 
 ## Improvements
+
+### Reporting Enhancements
+
+**Allure Integration:**
+- Direct JSON file generation (no pytest dependency required)
+- Automatic Allure CLI detection and report generation
+- Screenshot attachments copied to allure-results
+- Step-by-step execution tracking with parameters
+- Test metadata including locators, test data, expected/actual results
+
+**Report Management:**
+- Automatic cleanup of old reports before test execution
+- Separate cleanup for Allure results, HTML reports, and screenshots
+- Prevents confusion with stale test results
+
+**Updated Dependencies:**
+- Added `allure-pytest>=2.13.0` to requirements.txt
 
 ### Documentation Structure
 
@@ -67,6 +105,12 @@ None - all changes are backward compatible.
 
 ## File Changes Summary
 
+**New Files:**
+- `src/reports/allure_reporter.py` - Allure report generator implementation
+- `src/reports/base_reporter.py` - Abstract base class for reporters
+- `src/reports/reporter_factory.py` - Factory for creating reporter instances
+- `config/reporting_config.json` - Reporter configuration file
+
 **Moved Files:**
 - All RELEASE_NOTES_*.md moved to docs/releases/
 - CI_CD_SETUP.md moved to docs/cicd-setup-detailed.md
@@ -76,22 +120,45 @@ None - all changes are backward compatible.
 - README_old_backup.md (no longer needed)
 
 **Updated Files:**
-- README.md (updated links and added emulator troubleshooting reference)
-- tests/android/README.md (updated guide links)
-- tests/ios/README.md (updated guide links)
-- docs/troubleshooting.md (added emulator crash section)
+- `README.md` - Added Allure reporting instructions and troubleshooting
+- `requirements.txt` - Added allure-pytest dependency
+- `config/version.json` - Updated to v1.2.4
+- `src/automation/testzen_automation.py` - Integrated reporter factory
+- `src/reports/professional_reporter.py` - Added base class inheritance and cleanup
+- `tests/android/README.md` - Updated guide links
+- `tests/ios/README.md` - Updated guide links
+- `docs/troubleshooting.md` - Added emulator crash section
+- `docs/releases/RELEASE_NOTES_v1.2.4.md` - Added Allure reporting details
 
 ---
 
 ## Upgrade Instructions
 
-No special upgrade steps required. Simply pull the latest changes:
-
+1. Pull the latest changes:
 ```bash
 git pull origin main
 ```
 
-All existing functionality remains unchanged.
+2. Install new dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. (Optional) Install Allure CLI for viewing reports:
+```bash
+# macOS:
+brew install allure
+
+# Or using npm (all platforms):
+npm install -g allure-commandline
+```
+
+4. View Allure reports after test execution:
+```bash
+allure open reports/allure-report
+```
+
+All existing functionality remains unchanged. By default, Allure reporting is enabled, but you can switch to HTML reports by editing `config/reporting_config.json`.
 
 ---
 
@@ -104,9 +171,12 @@ None reported.
 ## What's Next
 
 Future releases will focus on:
+- Multi-reporter support (generate both Allure and HTML simultaneously)
 - Enhanced process cleanup mechanisms
 - Signal handler improvements for graceful test interruption
 - Better emulator process tracking
+- Allure categories and custom labels
+- Test retry and flaky test management
 
 ---
 

@@ -12,3 +12,6 @@ appium-python-client>=2.0.0
 # Machine learning (for self-healing)
 scikit-learn>=1.1.0
 numpy>=1.21.0
+
+# Reporting
+allure-pytest>=2.13.0

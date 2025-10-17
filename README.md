@@ -53,16 +53,43 @@ TestZen will:
 
 ### 4. View Test Report
 
-Report location after test completes:
-```
-reports/html_reports/TestZen_Report_<timestamp>.html
+TestZen supports two reporting formats (configured in `config/reporting_config.json`):
+
+**Allure Reports (Default)** - Interactive, professional reports with trends and history
+
+After test completes, view Allure report:
+```bash
+# Open Allure report (starts local web server)
+allure open reports/allure-report
+
+# Or serve results directly
+allure serve reports/allure-results
 ```
 
-Open in browser to see:
+**Important:** Never double-click `index.html` - Allure reports must be served via HTTP.
+
+Report shows:
+- Interactive timeline and trends
+- Test history and flaky test detection
+- Screenshots attached to each step
+- Detailed step execution with parameters
+- Execution time and status
+
+**HTML Reports** - Standalone HTML reports (if configured)
+
+Report location:
+```
+reports/<test_name>_report.html
+```
+
+Open directly in browser to see:
 - Pass/fail status for each step
 - Screenshots at each step
 - Execution time
 - Detailed error messages
+
+**Switch Reporting Format:**
+Edit `config/reporting_config.json` and change `default_reporter` to `"html"` or `"allure"`
 
 ---
 
@@ -110,9 +137,13 @@ testzen-lite/
 │   │   └── billing/      # Organize by feature
 │   └── ios/              # Place iOS test .xlsx files here
 │       └── login/        # Organize by feature
+├── config/
+│   └── reporting_config.json  # Configure Allure vs HTML reporting
 └── reports/
-    ├── html_reports/     # HTML reports generated here
-    └── excel_reports/    # Excel reports generated here
+    ├── allure-results/   # Allure test results (JSON)
+    ├── allure-report/    # Allure HTML report
+    ├── screenshots/      # Test screenshots
+    └── *_report.html     # Custom HTML reports (if configured)
 ```
 
 ---
@@ -227,6 +258,25 @@ adb kill-server && adb start-server
 
 ---
 
+### Allure report shows "loading" forever
+**Problem:** Allure reports opened by double-clicking index.html
+**Quick Fix:**
+```bash
+# Never double-click index.html
+# Always use Allure CLI to view reports:
+allure open reports/allure-report
+```
+**If Allure CLI not installed:**
+```bash
+# macOS:
+brew install allure
+
+# npm (all platforms):
+npm install -g allure-commandline
+```
+
+---
+
 ### Other installation issues
 **See:** [Complete Installation Guide](docs/installation.md)
 
@@ -248,6 +298,7 @@ adb kill-server && adb start-server
 
 ### Advanced
 - [Advanced Usage](docs/advanced-usage.md) - Advanced features and options
+- [Reporting Configuration](config/reporting_config.json) - Switch between Allure and HTML reports
 - [CI/CD Integration](docs/cicd-integration.md) - GitHub Actions, GitLab CI
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 
@@ -259,7 +310,8 @@ adb kill-server && adb start-server
 - **Auto-Appium** - Server starts automatically
 - **Auto-Emulator** - Launches emulator if needed
 - **Multi-Locator Fallback** - Automatic retry with alternative locators
-- **Professional Reports** - HTML reports with screenshots
+- **Allure Reports** - Interactive reports with trends and history (default)
+- **Custom HTML Reports** - Standalone HTML reports option
 - **CI/CD Ready** - Pre-configured for GitHub Actions & GitLab CI
 - **Debug APK Support** - Works with development builds
 - **Multi-Platform** - Android and iOS support
@@ -272,6 +324,8 @@ adb kill-server && adb start-server
 - **Node.js:** 16 or higher
 - **Android SDK:** For Android testing
 - **Xcode:** For iOS testing (macOS only)
+- **Allure CLI:** For viewing Allure reports (optional)
+  - Install: `brew install allure` (macOS) or `npm install -g allure-commandline`
 - **Operating Systems:** macOS, Linux, Windows
 
 ---
@@ -287,14 +341,20 @@ adb kill-server && adb start-server
 
 ## Example Test Report
 
-After running tests, HTML report shows:
+After running tests, Allure report shows:
 
-- Test summary (passed/failed counts)
-- Execution timeline
-- Screenshots at each step
-- Step-by-step timing
-- Detailed error messages for failures
-- Excel file with test data updated
+- Interactive dashboard with test overview
+- Test execution timeline and trends
+- Historical data and flaky test detection
+- Screenshots attached to each test step
+- Step-by-step execution with parameters
+- Detailed error messages and stack traces
+- Pass/fail statistics and duration
+- Categories and severity levels
+
+**View with:** `allure open reports/allure-report`
+
+For custom HTML reports, see `reports/<test_name>_report.html`
 
 ---
 

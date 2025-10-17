@@ -7,12 +7,14 @@ Generates beautiful, detailed HTML reports with screenshots and metrics
 import os
 import json
 import time
+import shutil
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+from src.reports.base_reporter import BaseReporter
 
 
-class ProfessionalReporter:
+class ProfessionalReporter(BaseReporter):
     """Generate professional HTML test reports with screenshots and detailed metrics"""
 
     def __init__(self, excel_file_name: str = "test"):
@@ -57,8 +59,36 @@ class ProfessionalReporter:
 
     def start_test_session(self):
         """Mark the start of test execution"""
+        # Clean up old reports and screenshots
+        self._cleanup_old_reports()
+
         self.start_time = time.time()
         self.test_steps = []
+
+    def _cleanup_old_reports(self):
+        """Clean up old HTML reports and screenshots before starting new test"""
+        try:
+            # Clean old HTML report for this test
+            old_report = self.reports_dir / f"{self.test_name}_report.html"
+            if old_report.exists():
+                old_report.unlink()
+                print(f"[HTML] Removed old report: {old_report.name}")
+
+            # Clean old summary JSON for this test
+            old_summary = self.reports_dir / f"{self.test_name}_summary.json"
+            if old_summary.exists():
+                old_summary.unlink()
+                print(f"[HTML] Removed old summary: {old_summary.name}")
+
+            # Clean old screenshots directory
+            if self.screenshot_dir.exists():
+                for screenshot in self.screenshot_dir.glob('*'):
+                    if screenshot.is_file():
+                        screenshot.unlink()
+                print(f"[HTML] Cleaned up old screenshots from: {self.screenshot_dir}")
+
+        except Exception as e:
+            print(f"[HTML] Warning: Failed to clean up old files: {e}")
 
     def end_test_session(self):
         """Mark the end of test execution"""
