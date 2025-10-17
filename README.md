@@ -310,7 +310,7 @@ After running tests, HTML report shows:
 
 Current version: **1.2.3**
 
-See [Release Notes](RELEASE_NOTES_v1.2.3.md) for changelog.
+See [Release Notes](docs/releases/v1.2.3.md) for changelog.
 
 ---
 

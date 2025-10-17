@@ -83,4 +83,4 @@ The workflow will install it on the emulator before running tests.
 - Don't put all tests in one module
 - Avoid generic names like "module1"
 
-For complete guide, see: `MULTI_MODULE_GUIDE.md`
+For complete guide, see: [Multi-Module Testing Guide](../../docs/multi-module-guide.md)
