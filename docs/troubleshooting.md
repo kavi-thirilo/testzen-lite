@@ -38,6 +38,64 @@ Detailed guide: [Device Setup - USB Debugging](device-setup.md#enable-usb-debugg
 
 ---
 
+### Emulator Crashes on Launch
+
+**Error:** Emulator crashes immediately or shows "Address already in use" error
+
+**Symptoms:**
+- Emulator window opens then crashes
+- Error about port 5037 being in use
+- Zombie emulator or ADB processes consuming CPU
+
+**Root Cause:** Stale ADB server or zombie emulator processes from previous interrupted tests
+
+**Quick Fix:**
+```bash
+# 1. Kill existing ADB server
+adb kill-server
+
+# 2. Kill zombie emulator processes (macOS/Linux)
+pkill -9 -f emulator
+pkill -9 -f crashpad_handler
+
+# 3. Restart ADB server
+adb start-server
+
+# 4. Verify port is free
+lsof -i :5037   # Should show nothing or only fresh ADB server
+```
+
+**For Windows:**
+```cmd
+# Kill ADB server
+adb kill-server
+
+# Kill emulator processes
+taskkill /F /IM emulator.exe
+taskkill /F /IM qemu-system-x86_64.exe
+
+# Restart ADB
+adb start-server
+```
+
+**Prevention Tips:**
+- Always stop tests gracefully (avoid Ctrl+C if possible)
+- Use `./testzen emulator stop` to stop emulators properly
+- If you must interrupt, run the quick fix commands afterward
+
+**Still Having Issues?**
+If the problem persists:
+1. Check for port conflicts:
+   ```bash
+   lsof -i :5037  # ADB port
+   lsof -i :5554  # Emulator port
+   lsof -i :5555  # Emulator ADB port
+   ```
+2. Restart your computer to clear all zombie processes
+3. Verify Android SDK is properly installed: [Android SDK Setup](android-sdk-setup.md)
+
+---
+
 ## Test Execution Issues
 
 ### Test File Not Found

@@ -211,6 +211,16 @@ If you encounter errors, check what's missing:
 
 ---
 
+### Emulator crashes or won't launch
+**Problem:** Emulator crashes immediately, port 5037 in use, or zombie processes
+**Quick Fix:**
+```bash
+adb kill-server && adb start-server
+```
+**Detailed Fix:** [Troubleshooting Guide - Emulator Crashes](docs/troubleshooting.md#emulator-crashes-on-launch)
+
+---
+
 ### Commands don't work after installation
 **What's missing:** PATH not configured
 **Fix:** [PATH Configuration Guide](docs/path-configuration.md)
